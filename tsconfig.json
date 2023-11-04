@@ -1,6 +1,7 @@
 {
     "__COMMENT__": "as in https://vite.new/vue-ts",
     "compilerOptions": {
+        "allowJs": true,
         "baseUrl": ".",
         "esModuleInterop": true,
         "jsx": "preserve",
@@ -20,6 +21,9 @@
         "sourceMap": true,
         "strict": true,
         "target": "esnext",
+        "types": [
+            "vitest/importMeta"
+        ],
         "useDefineForClassFields": true
     },
     "include": [
