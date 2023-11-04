@@ -1,0 +1,29 @@
+{
+    "__COMMENT__": "as in https://vite.new/vue-ts",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "jsx": "preserve",
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "module": "esnext",
+        "moduleResolution": "node",
+        "noErrorTruncation": true,
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "esnext",
+        "useDefineForClassFields": true
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.vue"
+    ]
+}
