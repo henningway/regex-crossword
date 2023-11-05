@@ -1,3 +1,5 @@
+export type Board = string[][];
+
 export interface Game {
     board: Board;
     regex: {
@@ -7,4 +9,7 @@ export interface Game {
     size: number;
 }
 
-export type Board = string[][];
+export interface Options {
+    solution: boolean;
+    rotate: boolean;
+}
