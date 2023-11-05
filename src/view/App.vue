@@ -11,8 +11,8 @@
 </template>
 
 <script setup lang="ts">
-    import Board from '@/Board.vue';
-    import Controls from '@/Controls.vue';
+    import Board from '@/view/Board.vue';
+    import Controls from '@/view/Controls.vue';
     import { generateGame } from '@/util/game';
     import type { Game } from '@/type/common';
     import { ref } from 'vue';
