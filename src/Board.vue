@@ -32,7 +32,7 @@
                         :class="{ 'text-green-600': checkColRegex(colIndex) }"
                         :style="{ height: CELL_PX + 'px' }"
                     >
-                        {{ game.regex.columns[colIndex] }}
+                        {{ slice(1, -1, game.regex.columns[colIndex].source) }}
                     </div>
                 </div>
 
@@ -42,7 +42,7 @@
                     :class="{ 'text-green-600': checkRowRegex(rowIndex) }"
                     :style="{ height: CELL_PX + 'px' }"
                 >
-                    {{ game.regex.rows[rowIndex] }}
+                    {{ slice(1, -1, game.regex.rows[rowIndex].source) }}
                 </div>
             </div>
         </template>
@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
     import type { Board, Game } from '@/type/common';
-    import { always as _, assocPath, last, test, times, toUpper, transpose } from 'ramda';
+    import { always as _, assocPath, last, slice, test, times, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
     import { collapse } from '@/util/string';
 
