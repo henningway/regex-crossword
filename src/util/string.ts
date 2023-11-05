@@ -5,7 +5,7 @@ export function matches(substring: string, value: string): RegExpMatchArray[] {
     return [...value.matchAll(new RegExp(substring, 'g'))];
 }
 
-export function matchCount(substring: string, value: string): number {
+export function matchLength(substring: string, value: string): number {
     return matches(substring, value).length;
 }
 
