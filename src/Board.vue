@@ -49,7 +49,12 @@
                         class="sr-only transition-transform border-none w-full h-full outline-none transform bg-transparent text-center"
                         :class="{ 'rotate-45': options.rotate }"
                         :value="input[rowIndex][colIndex]"
-                        @focus="activeCell = { row: rowIndex, col: colIndex }"
+                        @focus="
+                            (event: any) => {
+                                event.target.select();
+                                activeCell = { row: rowIndex, col: colIndex };
+                            }
+                        "
                         @blur="activeCell = null"
                         @input.capture="update(($event.target as HTMLInputElement).value, rowIndex, colIndex)"
                     />
@@ -81,7 +86,7 @@
 <script setup lang="ts">
     import type { Board, Game, Options } from '@/type/common';
     import { Direction } from '@/type/enum';
-    import { always as _, assocPath, clamp, equals, last, slice, test, times, toUpper, transpose } from 'ramda';
+    import { always as _, assocPath, equals, last, slice, test, times, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
     import { collapse } from '@/util/string';
 
@@ -96,7 +101,8 @@
 
     /* METHODS */
     const focus = (row: number, col: number) => {
-        inputRefs.value.find((e) => e.id === `cell-${row}-${col}`)?.focus();
+        const el = inputRefs.value.find((e) => e.id === `cell-${row}-${col}`);
+        el?.focus();
     };
 
     const checkColRegex = (colIndex: number): boolean => {
@@ -108,34 +114,32 @@
     };
 
     const navigate = (direction: Direction) => {
-        let sourceRow = activeCell.value?.row;
-        let sourceCol = activeCell.value?.col;
+        const source = { row: activeCell.value?.row, col: activeCell.value?.col };
 
-        if (sourceRow === undefined || sourceCol === undefined) return;
+        if (source.row === undefined || source.col === undefined) return;
 
-        let targetRow: number = sourceRow;
-        let targetCol: number = sourceCol;
+        let target = { row: source.row, col: source.col };
 
-        if (direction === Direction.UP) {
-            targetRow = clamp(0, props.game.size, sourceRow - 1);
-        }
+        // first pass: regular movement
+        if (direction === Direction.UP) target.row = source.row - 1;
+        if (direction === Direction.DOWN) target.row = source.row + 1;
+        if (direction === Direction.LEFT) target.col = source.col - 1;
+        if (direction === Direction.RIGHT) target.col = source.col + 1;
 
-        if (direction === Direction.DOWN) {
-            targetRow = clamp(0, props.game.size, sourceRow + 1);
-        }
+        // second pass: overflowing
+        if (target.row === props.game.size) target = { row: 0, col: target.col + 1 };
+        else if (target.col === props.game.size) target = { row: target.row + 1, col: 0 };
+        else if (target.row === -1) target = { row: props.game.size - 1, col: target.col - 1 };
+        else if (target.col === -1) target = { row: target.row - 1, col: props.game.size - 1 };
 
-        if (direction === Direction.LEFT) {
-            targetCol = clamp(0, props.game.size, sourceCol - 1);
-        }
-
-        if (direction === Direction.RIGHT) {
-            targetCol = clamp(0, props.game.size, sourceCol + 1);
-        }
-
-        focus(targetRow, targetCol);
+        focus(target.row, target.col);
     };
 
     const update = (value: string | null, rowIndex: number, colIndex: number) => {
+        console.log(value);
+
         input.value = assocPath([rowIndex, colIndex], toUpper(value !== null ? last(value) : ''), input.value);
+
+        navigate(Direction.RIGHT);
     };
 </script>
