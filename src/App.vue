@@ -1,15 +1,22 @@
 <template>
-    <div class="w-screen h-screen flex justify-center items-center">
+    <Controls
+        v-slot="{ options }"
+        @reset="game = generateGame(7)"
+    >
         <Board
             :game="game"
+            :options="options"
         />
-    </div>
+    </Controls>
 </template>
 
 <script setup lang="ts">
     import Board from '@/Board.vue';
+    import Controls from '@/Controls.vue';
     import { generateGame } from '@/util/game';
     import type { Game } from '@/type/common';
+    import { ref } from 'vue';
 
-    const game: Game = generateGame(5   );
+    /* REFS */
+    const game = ref<Game>(generateGame(7));
 </script>

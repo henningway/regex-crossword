@@ -1,5 +1,8 @@
 <template>
-    <div class="transform -rotate-45 text-xl">
+    <div
+        class="text-xl transition-transform"
+        :class="{ '-rotate-45': options.rotate }"
+    >
         <template v-for="(row, rowIndex) in game.board">
             <!-- row incl. row regex -->
             <div
@@ -12,17 +15,21 @@
                     class="relative h-full flex justify-center items-center border border-black p-1"
                     :style="{ width: CELL_PX + 'px' }"
                 >
+                    <!-- solution -->
                     <span
-                        class="text-gray-200 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none rotate-45 bg-transparent"
+                        class="transition-transform text-gray-200 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
+                        :class="{ 'rotate-45': options.rotate }"
                     >
                         {{ char }}
                     </span>
 
+                    <!-- input -->
                     <input
                         type="text"
-                        class="border-none w-5 h-full outline-none transform rotate-45 bg-transparent"
+                        class="transition-transform border-none w-full h-full outline-none transform bg-transparent text-center"
+                        :class="{ 'rotate-45': options.rotate }"
                         :value="input[rowIndex][colIndex]"
-                        @input="update(($event.target as HTMLInputElement).value, rowIndex, colIndex)"
+                        @input.capture="update(($event.target as HTMLInputElement).value, rowIndex, colIndex)"
                     />
 
                     <!-- column regexes: relatively positioned to element in last row -->
@@ -57,7 +64,7 @@
 
     const CELL_PX = 40;
 
-    const props = defineProps<{ game: Game }>();
+    const props = defineProps<{ game: Game; options: { rotate: boolean } }>();
 
     /* REFS */
     const input = ref<Board>(times(_(times(_(''), props.game.size)), props.game.size));
