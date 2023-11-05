@@ -5,35 +5,19 @@
         </div>
 
         <div class="w-100 flex justify-center p-4 border border-t-gray-200 bg-slate-100 gap-4">
-            <div class="flex items-center">
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        :value="options.rotate"
-                        class="sr-only peer"
-                        @input="toggleRotation"
-                    />
-                    <div
-                        class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"
-                    />
-                    <span class="ml-2 text-md font-medium">Rotate</span>
-                </label>
-            </div>
+            <ToggleButton
+                :value="options.rotate"
+                @update="toggleRotation"
+            >
+                Rotate
+            </ToggleButton>
 
-            <div class="flex items-center">
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        :value="options.solution"
-                        class="sr-only peer"
-                        @input="toggleSolution"
-                    />
-                    <div
-                        class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"
-                    />
-                    <span class="ml-2 text-md font-medium">Solution</span>
-                </label>
-            </div>
+            <ToggleButton
+                :value="options.solution"
+                @update="toggleSolution"
+            >
+                Solution
+            </ToggleButton>
 
             <div
                 class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -63,6 +47,7 @@
 <script setup lang="ts">
     import { ref, onBeforeUnmount } from 'vue';
     import type { Options } from '@/type/common';
+    import ToggleButton from '@/view/ToggleButton.vue';
 
     defineEmits(['reset']);
 
