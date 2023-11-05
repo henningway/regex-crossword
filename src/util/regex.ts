@@ -35,9 +35,9 @@ function regexRandomSubsetOfSymbols(symbols: string[]): RegExp {
     const subset = randomSubset(symbols);
 
     if (subset.length === 1) return new RegExp(`^.*${subset[0]}.*$`);
-    if (subset.length === symbols.length) return new RegExp(`^[${join('', subset)}]*$`);
+    if (subset.length === symbols.length) return new RegExp(`^[${join('', subset)}]+$`);
 
-    return new RegExp(`^.*[${collapse(subset)}]*.*$`);
+    return new RegExp(`^.*[${collapse(subset)}]+.*$`);
 }
 
 /**

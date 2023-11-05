@@ -20,7 +20,7 @@
 
                     <input
                         type="text"
-                        class="border-none w-3 h-full outline-none transform rotate-45 bg-transparent"
+                        class="border-none w-5 h-full outline-none transform rotate-45 bg-transparent"
                         :value="input[rowIndex][colIndex]"
                         @input="update(($event.target as HTMLInputElement).value, rowIndex, colIndex)"
                     />
@@ -29,6 +29,7 @@
                     <div
                         v-if="rowIndex === game.size - 1"
                         class="absolute top-full left-full origin-top-left rotate-90 flex items-center px-2"
+                        :class="{ 'text-green-600': checkColRegex(colIndex) }"
                         :style="{ height: CELL_PX + 'px' }"
                     >
                         {{ game.regex.columns[colIndex] }}
@@ -38,6 +39,7 @@
                 <!-- row regex -->
                 <div
                     class="absolute left-full flex items-center px-2"
+                    :class="{ 'text-green-600': checkRowRegex(rowIndex) }"
                     :style="{ height: CELL_PX + 'px' }"
                 >
                     {{ game.regex.rows[rowIndex] }}
@@ -49,8 +51,9 @@
 
 <script setup lang="ts">
     import type { Board, Game } from '@/type/common';
-    import { always as _, assocPath, last, times, toUpper } from 'ramda';
+    import { always as _, assocPath, last, test, times, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
+    import { collapse } from '@/util/string';
 
     const CELL_PX = 40;
 
@@ -60,6 +63,14 @@
     const input = ref<Board>(times(_(times(_(''), props.game.size)), props.game.size));
 
     /* METHODS */
+    const checkRowRegex = (rowIndex: number): boolean => {
+        return test(props.game.regex.rows[rowIndex], collapse(input.value[rowIndex]));
+    };
+
+    const checkColRegex = (colIndex: number): boolean => {
+        return test(props.game.regex.columns[colIndex], collapse(transpose(input.value)[colIndex]));
+    };
+
     const update = (value: string | null, rowIndex: number, colIndex: number) => {
         input.value = assocPath([rowIndex, colIndex], toUpper(value !== null ? last(value) : ''), input.value);
     };
