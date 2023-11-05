@@ -1,6 +1,6 @@
-import { randomElement, randomSubset, repeatFunction, shuffle } from '@/util/common';
-import { all, flip, init, join, map, reduce, repeat, split, test, uniqBy } from 'ramda';
-import { symbols, repeatedSubstringsWithoutOverlap, matchLength } from '@/util/string';
+import { randomElement, randomSubset, repeatFunction } from '@/util/common';
+import { all, flip, init, join, map, reduce, repeat, test, uniqBy } from 'ramda';
+import { symbols, repeatedSubstringsWithoutOverlap, matchLength, collapse, expand } from '@/util/string';
 
 /**
  * Provides a number of characteristics describing given string.
@@ -11,15 +11,15 @@ function stringCharacteristics(value: string) {
     return {
         value,
         symbols: symbols(value),
-        longestRepeat: repeats[0],
-        longestRepeatCount: matchLength(repeats[0], value),
+        longestRepeat: repeats[0] ?? '',
+        longestRepeatCount: matchLength(repeats[0] ?? '', value),
         repeats
     };
 }
 
 /**
  * Revelas the longest repeating non-overlapping sequence of symbols. Uses capturing to make the regex harder to read.
- * 
+ *
  * Ex.: MISSISSIPPI => /^.*(ISS).*\1.*$/
  */
 function regexLongestRepeat(value: string, count: number): RegExp {
@@ -37,7 +37,7 @@ function regexRandomSubsetOfSymbols(symbols: string[]): RegExp {
     if (subset.length === 1) return new RegExp(`^.*${subset[0]}.*$`);
     if (subset.length === symbols.length) return new RegExp(`^[${join('', subset)}]*$`);
 
-    return new RegExp(`^.*[${join('', subset)}]*.*$`);
+    return new RegExp(`^.*[${collapse(subset)}]*.*$`);
 }
 
 /**
@@ -48,7 +48,7 @@ function regexRandomSubsetOfSymbols(symbols: string[]): RegExp {
 function regexRandomSymbols(value: string): RegExp {
     const threshold = 0.25;
 
-    const pattern: string[] = map((char) => (Math.random() > threshold ? '.' : char), split('', value)); // most likely contains stretches of "..."
+    const pattern: string[] = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
 
     const patternReduced: string[] = reduce(
         (acc: string[], val: string) =>
@@ -57,13 +57,13 @@ function regexRandomSymbols(value: string): RegExp {
         pattern
     );
 
-    return new RegExp(`^${join('', patternReduced)}$`);
+    return new RegExp(`^${collapse(patternReduced)}$`);
 }
 
 /**
  * Produces a RegExp for given value.
  */
-function guessRegex(value: string): RegExp {
+export function guessRegex(value: string): RegExp {
     const c = stringCharacteristics(value);
 
     const candidates: (() => RegExp)[] = [];
@@ -99,11 +99,10 @@ if (import.meta.vitest) {
         expect(uniqRes.length).toBeGreaterThan(20);
     });
 
-
     it('can generate a regex that reveals the longest repeating non-overlapping sequence of symbols', () => {
         const value = 'MISSISSIPPI';
 
-        const repeats = repeatedSubstringsWithoutOverlap(value)
+        const repeats = repeatedSubstringsWithoutOverlap(value);
 
         const re = regexLongestRepeat(repeats[0], matchLength(repeats[0], value));
 

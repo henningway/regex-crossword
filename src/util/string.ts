@@ -1,5 +1,8 @@
-import { uniq, split, times, chain, pluck, filter, descend, prop, sortBy, reverse, pipe } from 'ramda';
+import { uniq, split, times, chain, pluck, filter, descend, prop, sortBy, reverse, pipe, join } from 'ramda';
 import { SuffixTree } from '@/util/suffix-tree';
+
+export const collapse = join('');
+export const expand = split('');
 
 export function matches(substring: string, value: string): RegExpMatchArray[] {
     return [...value.matchAll(new RegExp(substring, 'g'))];

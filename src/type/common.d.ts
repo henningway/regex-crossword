@@ -1,3 +1,10 @@
 export interface Game {
-    board: string[][];
+    board: Board;
+    regex: {
+        rows: RegExp[];
+        columns: RegExp[];
+    };
+    size: number;
 }
+
+export type Board = string[][];

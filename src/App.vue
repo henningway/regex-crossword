@@ -11,5 +11,5 @@
     import { generateGame } from '@/util/game';
     import type { Game } from '@/type/common';
 
-    const game: Game = generateGame(7);
+    const game: Game = generateGame(5   );
 </script>
