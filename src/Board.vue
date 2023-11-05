@@ -1,6 +1,6 @@
 <template>
     <div
-        class="text-xl transition-transform"
+        class="text-xl text-gray-900 transition-transform border border-gray-900"
         :class="{ '-rotate-45': options.rotate }"
         @keydown.up="navigate(Direction.UP)"
         @keydown.down="navigate(Direction.DOWN)"
@@ -20,7 +20,7 @@
                 <div
                     v-for="(char, colIndex) in row"
                     :key="colIndex"
-                    class="relative h-full flex justify-center items-center border border-black p-1"
+                    class="relative h-full flex justify-center items-center border border-gray-900 p-1"
                     :style="{ width: CELL_PX + 'px' }"
                     :class="{ 'bg-blue-100': equals(activeCell, { row: rowIndex, col: colIndex }) }"
                     @click="focus(rowIndex, colIndex)"
