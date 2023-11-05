@@ -10,6 +10,7 @@ export function generateGame(size: number): Game {
     const board: Board = times(() => times(() => randomElement(allSymbols), size), size);
 
     return {
+        allSymbols,
         board,
         regex: {
             rows: map(pipe(collapse, guessRegex), board),

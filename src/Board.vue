@@ -6,6 +6,7 @@
         @keydown.down="navigate(Direction.DOWN)"
         @keydown.left="navigate(Direction.LEFT)"
         @keydown.right="navigate(Direction.RIGHT)"
+        @keydown.capture="keyListener"
     >
         <template
             v-for="(row, rowIndex) in game.board"
@@ -49,14 +50,8 @@
                         class="sr-only transition-transform border-none w-full h-full outline-none transform bg-transparent text-center"
                         :class="{ 'rotate-45': options.rotate }"
                         :value="input[rowIndex][colIndex]"
-                        @focus="
-                            (event: any) => {
-                                event.target.select();
-                                activeCell = { row: rowIndex, col: colIndex };
-                            }
-                        "
+                        @focus="activeCell = { row: rowIndex, col: colIndex }"
                         @blur="activeCell = null"
-                        @input.capture="update(($event.target as HTMLInputElement).value, rowIndex, colIndex)"
                     />
 
                     <!-- column regexes: relatively positioned to element in last row -->
@@ -86,9 +81,9 @@
 <script setup lang="ts">
     import type { Board, Game, Options } from '@/type/common';
     import { Direction } from '@/type/enum';
-    import { always as _, assocPath, equals, last, slice, test, times, toUpper, transpose } from 'ramda';
-    import { ref } from 'vue';
     import { collapse } from '@/util/string';
+    import { always as _, assocPath, equals, includes, slice, test, times, toUpper, transpose } from 'ramda';
+    import { ref } from 'vue';
 
     const CELL_PX = 40;
 
@@ -101,8 +96,7 @@
 
     /* METHODS */
     const focus = (row: number, col: number) => {
-        const el = inputRefs.value.find((e) => e.id === `cell-${row}-${col}`);
-        el?.focus();
+        inputRefs.value.find((e) => e.id === `cell-${row}-${col}`)?.focus();
     };
 
     const checkColRegex = (colIndex: number): boolean => {
@@ -120,13 +114,13 @@
 
         let target = { row: source.row, col: source.col };
 
-        // first pass: regular movement
+        // first pass: regular, values might be out of bounds
         if (direction === Direction.UP) target.row = source.row - 1;
         if (direction === Direction.DOWN) target.row = source.row + 1;
         if (direction === Direction.LEFT) target.col = source.col - 1;
         if (direction === Direction.RIGHT) target.col = source.col + 1;
 
-        // second pass: overflowing
+        // second pass: handle overflows
         if (target.row === props.game.size) target = { row: 0, col: target.col + 1 };
         else if (target.col === props.game.size) target = { row: target.row + 1, col: 0 };
         else if (target.row === -1) target = { row: props.game.size - 1, col: target.col - 1 };
@@ -135,11 +129,28 @@
         focus(target.row, target.col);
     };
 
-    const update = (value: string | null, rowIndex: number, colIndex: number) => {
-        console.log(value);
+    const update = (value: string) => {
+        if (activeCell.value === null) return;
+        input.value = assocPath([activeCell.value.row, activeCell.value.col], value, input.value);
+    };
 
-        input.value = assocPath([rowIndex, colIndex], toUpper(value !== null ? last(value) : ''), input.value);
+    const keyListener = (e: KeyboardEvent) => {
+        if (activeCell.value === null) return;
 
-        navigate(Direction.RIGHT);
+        if (includes(toUpper(e.key), props.game.allSymbols)) {
+            e.stopPropagation();
+            update(toUpper(e.key));
+            navigate(Direction.RIGHT);
+        }
+
+        if (e.key === 'Backspace') {
+            update('');
+            navigate(Direction.LEFT);
+        }
+
+        if (e.key === 'Delete') {
+            update('');
+            navigate(Direction.RIGHT);
+        }
     };
 </script>

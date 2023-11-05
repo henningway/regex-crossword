@@ -75,16 +75,14 @@
 
     /* INIT */
     const keyListener = (e: KeyboardEvent) => {
-        if (e.ctrlKey) {
-            if (e.key === 'r') {
-                toggleRotation();
-                e.preventDefault();
-            }
+        if (e.key === 'r') {
+            toggleRotation();
+            e.preventDefault();
+        }
 
-            if (e.key === 's') {
-                toggleSolution();
-                e.preventDefault();
-            }
+        if (e.key === 's') {
+            toggleSolution();
+            e.preventDefault();
         }
     };
 

@@ -1,6 +1,7 @@
 export type Board = string[][];
 
 export interface Game {
+    allSymbols: string[];
     board: Board;
     regex: {
         rows: RegExp[];
