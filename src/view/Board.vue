@@ -1,6 +1,6 @@
 <template>
     <div
-        class="text-xl text-gray-900 transition-transform border border-gray-900"
+        class="text-xl transition-transform border border-gray-900 dark:border-slate-400"
         :class="{ '-rotate-45': options.rotate }"
         @keydown.up="navigate(Direction.UP)"
         @keydown.down="navigate(Direction.DOWN)"
@@ -21,15 +21,15 @@
                 <div
                     v-for="(char, colIndex) in row"
                     :key="colIndex"
-                    class="relative h-full flex justify-center items-center border border-gray-900 p-1"
+                    class="relative h-full flex justify-center items-center border border-gray-900 dark:border-slate-400 p-1"
                     :style="{ width: CELL_PX + 'px' }"
-                    :class="{ 'bg-blue-100': equals(activeCell, { row: rowIndex, col: colIndex }) }"
+                    :class="{ 'bg-blue-100 dark:bg-rose-800': equals(activeCell, { row: rowIndex, col: colIndex }) }"
                     @click="focus(rowIndex, colIndex)"
                 >
                     <!-- solution -->
                     <span
                         v-if="options.solution && input[rowIndex][colIndex] === ''"
-                        class="transition-transform text-gray-400 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
+                        class="transition-transform text-gray-400 dark:text-gray-700 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
                     >
                         {{ char }}

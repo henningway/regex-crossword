@@ -4,7 +4,16 @@
             <slot :options="options" />
         </div>
 
-        <div class="w-100 flex justify-center p-4 border border-t-gray-200 bg-slate-100 gap-4">
+        <div
+            class="w-100 flex justify-center p-4 border-t border-t-gray-200 dark:border-t-gray-700 bg-slate-100 dark:bg-slate-800 gap-4"
+        >
+            <ToggleButton
+                :value="darkmode"
+                @update="toggleDarkmode"
+            >
+                Dark
+            </ToggleButton>
+
             <ToggleButton
                 :value="options.rotate"
                 @update="toggleRotation"
@@ -52,11 +61,26 @@
     defineEmits(['reset']);
 
     /* REFS */
+    const darkmode = ref<boolean>(document.querySelector('html')?.classList[0] === 'dark');
     const options = ref<Options>({ solution: false, rotate: false });
 
     /* METHODS */
     const toggleSolution = () => (options.value = { ...options.value, solution: !options.value.solution });
     const toggleRotation = () => (options.value = { ...options.value, rotate: !options.value.rotate });
+
+    const toggleDarkmode = () => {
+        const htmlEl = document.querySelector('html');
+
+        if (htmlEl?.classList.contains('dark')) {
+            htmlEl?.classList.remove('dark');
+            htmlEl?.classList.add('light');
+            darkmode.value = false;
+        } else {
+            htmlEl?.classList.remove('light');
+            htmlEl?.classList.add('dark');
+            darkmode.value = true;
+        }
+    };
 
     /* INIT */
     const keyListener = (e: KeyboardEvent) => {
