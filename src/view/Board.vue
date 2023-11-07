@@ -80,10 +80,10 @@
 
 <script setup lang="ts">
     import { useGameStore } from '@/app/game';
-    import type { Board, Options } from '@/type/common';
+    import type { Options } from '@/type/common';
     import { Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
-    import { always as _, assocPath, equals, includes, slice, test, times, toUpper, transpose } from 'ramda';
+    import { always as _, equals, includes, slice, test, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
 
     const CELL_PX = 40;
@@ -151,6 +151,6 @@
 
     const update = (value: string) => {
         if (activeCell.value === null) return;
-        game.userBoard = assocPath([activeCell.value.row, activeCell.value.col], value, game.userBoard);
+        game.addUpdate({ row: activeCell.value.row, col: activeCell.value.col, value });
     };
 </script>

@@ -1,5 +1,14 @@
 export type Board = string[][];
 
+/**
+ * Describes an update to the user board.
+ */
+export interface BoardUpdate {
+    row: number;
+    col: number;
+    value: string;
+}
+
 export interface Game {
     allSymbols: string[];
     board: Board;
@@ -7,7 +16,8 @@ export interface Game {
         rows: RegExp[];
         columns: RegExp[];
     };
-    userBoard: Board;
+    undoIndex: number;
+    userInput: BoardUpdate[];
     size: number;
 }
 

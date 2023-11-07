@@ -1,13 +1,27 @@
-import { Game } from '@/type/common';
+import { Board, BoardUpdate, Game } from '@/type/common';
 import { generateGame } from '@/util/game';
 import { defineStore } from 'pinia';
-import { repeat } from 'ramda';
+import { assocPath, reduce, repeat, take } from 'ramda';
 
 export const useGameStore = defineStore('game', {
     state: (): Game => generateGame(7),
+    getters: {
+        userBoard: (state): Board =>
+            reduce(
+                (board: Board, update: BoardUpdate) => assocPath([update.row, update.col], update.value, board),
+                repeat(repeat('', state.size), state.size) as Board,
+                take(state.undoIndex, state.userInput)
+            )
+    },
     actions: {
-        reset() {
-            this.userBoard = repeat(repeat('', this.size), this.size);
+        addUpdate(update: BoardUpdate) {
+            if (this.undoIndex < this.userInput.length) this.userInput = take(this.undoIndex, this.userInput);
+
+            this.userInput.push(update);
+            this.updateUserIndex(this.userInput.length);
+        },
+        updateUserIndex(value: number) {
+            this.undoIndex = value;
         }
     }
 });

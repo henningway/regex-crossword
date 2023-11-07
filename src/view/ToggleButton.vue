@@ -1,6 +1,6 @@
 <template>
     <label
-        class="relative cursor-pointer flex items-center text-md font-medium gap-1"
+        class="relative cursor-pointer flex items-center gap-2"
         :class="{ toggleValue }"
     >
         <input

@@ -16,7 +16,8 @@ export function generateGame(size: number): Game {
             rows: map(pipe(collapse, guessRegex), board),
             columns: map(pipe(collapse, guessRegex), columns(board))
         },
-        userBoard: repeat(repeat('', size), size),
+        undoIndex: 0,
+        userInput: [],
         size
     };
 }

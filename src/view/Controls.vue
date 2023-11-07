@@ -5,7 +5,7 @@
         </div>
 
         <div
-            class="w-100 flex justify-center p-4 border-t border-t-gray-200 dark:border-t-gray-700 bg-slate-100 dark:bg-slate-800 gap-4"
+            class="w-100 flex justify-center items-center p-4 border-t border-t-gray-200 dark:border-t-gray-700 bg-slate-100 dark:bg-slate-800 gap-4 font-medium"
         >
             <ToggleButton
                 :value="darkmode"
@@ -28,27 +28,18 @@
                 Solution
             </ToggleButton>
 
-            <div
-                class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                @click="game.reset()"
-            >
-                <svg
-                    class="w-3 h-3 mr-1"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 16 14"
-                >
-                    <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="m12 7 3-3-3-3m0 12H5.5a4.5 4.5 0 1 1 0-9H14"
-                    />
-                </svg>
+            <div class="w-[1px] h-[35px] bg-gray-200 dark:bg-gray-700 -mt-[10px] -mb-[10px]" />
 
-                Reset
-            </div>
+            <label for="replay-slider">Replay:</label>
+            <input
+                id="replay-slider"
+                type="range"
+                class="w-[200px] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700"
+                min="0"
+                :max="game.userInput.length"
+                @input="(event) => game.updateUserIndex(parseInt((event.target as HTMLInputElement).value))"
+                :value="game.undoIndex"
+            />
         </div>
     </div>
 </template>
