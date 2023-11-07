@@ -28,7 +28,7 @@
                 >
                     <!-- solution -->
                     <span
-                        v-if="options.solution && input[rowIndex][colIndex] === ''"
+                        v-if="options.solution && game.userBoard[rowIndex][colIndex] === ''"
                         class="transition-transform text-gray-400 dark:text-gray-700 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
                     >
@@ -39,7 +39,7 @@
                         class="transition-transform absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
                     >
-                        {{ input[rowIndex][colIndex] }}
+                        {{ game.userBoard[rowIndex][colIndex] }}
                     </span>
 
                     <!-- input -->
@@ -49,7 +49,7 @@
                         :id="`cell-${rowIndex}-${colIndex}`"
                         class="sr-only transition-transform border-none w-full h-full outline-none transform bg-transparent text-center"
                         :class="{ 'rotate-45': options.rotate }"
-                        :value="input[rowIndex][colIndex]"
+                        :value="game.userBoard[rowIndex][colIndex]"
                         @focus="activeCell = { row: rowIndex, col: colIndex }"
                         @blur="activeCell = null"
                     />
@@ -94,20 +94,37 @@
 
     /* REFS */
     const activeCell = ref<{ row: number; col: number } | null>(null);
-    const input = ref<Board>(times(_(times(_(''), game.size)), game.size));
     const inputRefs = ref<HTMLInputElement[]>([]);
 
     /* METHODS */
+    const checkColRegex = (colIndex: number): boolean =>
+        test(game.regex.columns[colIndex], collapse(transpose(game.userBoard)[colIndex]));
+
+    const checkRowRegex = (rowIndex: number): boolean =>
+        test(game.regex.rows[rowIndex], collapse(game.userBoard[rowIndex]));
+
     const focus = (row: number, col: number) => {
         inputRefs.value.find((e) => e.id === `cell-${row}-${col}`)?.focus();
     };
 
-    const checkColRegex = (colIndex: number): boolean => {
-        return test(game.regex.columns[colIndex], collapse(transpose(input.value)[colIndex]));
-    };
+    const keyListener = (e: KeyboardEvent) => {
+        if (activeCell.value === null) return;
 
-    const checkRowRegex = (rowIndex: number): boolean => {
-        return test(game.regex.rows[rowIndex], collapse(input.value[rowIndex]));
+        if (includes(toUpper(e.key), game.allSymbols)) {
+            e.stopPropagation();
+            update(toUpper(e.key));
+            navigate(Direction.RIGHT);
+        }
+
+        if (e.key === 'Backspace') {
+            update('');
+            navigate(Direction.LEFT);
+        }
+
+        if (e.key === 'Delete') {
+            update('');
+            navigate(Direction.RIGHT);
+        }
     };
 
     const navigate = (direction: Direction) => {
@@ -134,26 +151,6 @@
 
     const update = (value: string) => {
         if (activeCell.value === null) return;
-        input.value = assocPath([activeCell.value.row, activeCell.value.col], value, input.value);
-    };
-
-    const keyListener = (e: KeyboardEvent) => {
-        if (activeCell.value === null) return;
-
-        if (includes(toUpper(e.key), game.allSymbols)) {
-            e.stopPropagation();
-            update(toUpper(e.key));
-            navigate(Direction.RIGHT);
-        }
-
-        if (e.key === 'Backspace') {
-            update('');
-            navigate(Direction.LEFT);
-        }
-
-        if (e.key === 'Delete') {
-            update('');
-            navigate(Direction.RIGHT);
-        }
+        game.userBoard = assocPath([activeCell.value.row, activeCell.value.col], value, game.userBoard);
     };
 </script>

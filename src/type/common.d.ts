@@ -7,6 +7,7 @@ export interface Game {
         rows: RegExp[];
         columns: RegExp[];
     };
+    userBoard: Board;
     size: number;
 }
 

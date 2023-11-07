@@ -1,4 +1,4 @@
-import { map, pipe, times, transpose } from 'ramda';
+import { always as _, map, pipe, repeat, times, transpose } from 'ramda';
 import { collapse, symbols } from '@/util/string';
 import { randomElement } from '@/util/common';
 import type { Board, Game } from '@/type/common';
@@ -16,6 +16,7 @@ export function generateGame(size: number): Game {
             rows: map(pipe(collapse, guessRegex), board),
             columns: map(pipe(collapse, guessRegex), columns(board))
         },
+        userBoard: repeat(repeat('', size), size),
         size
     };
 }
