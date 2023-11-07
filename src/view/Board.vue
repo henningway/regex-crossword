@@ -79,7 +79,8 @@
 </template>
 
 <script setup lang="ts">
-    import type { Board, Game, Options } from '@/type/common';
+    import { useGameStore } from '@/app/game';
+    import type { Board, Options } from '@/type/common';
     import { Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
     import { always as _, assocPath, equals, includes, slice, test, times, toUpper, transpose } from 'ramda';
@@ -87,11 +88,13 @@
 
     const CELL_PX = 40;
 
-    const props = defineProps<{ game: Game; options: Options }>();
+    const game = useGameStore();
+
+    defineProps<{ options: Options }>();
 
     /* REFS */
     const activeCell = ref<{ row: number; col: number } | null>(null);
-    const input = ref<Board>(times(_(times(_(''), props.game.size)), props.game.size));
+    const input = ref<Board>(times(_(times(_(''), game.size)), game.size));
     const inputRefs = ref<HTMLInputElement[]>([]);
 
     /* METHODS */
@@ -100,11 +103,11 @@
     };
 
     const checkColRegex = (colIndex: number): boolean => {
-        return test(props.game.regex.columns[colIndex], collapse(transpose(input.value)[colIndex]));
+        return test(game.regex.columns[colIndex], collapse(transpose(input.value)[colIndex]));
     };
 
     const checkRowRegex = (rowIndex: number): boolean => {
-        return test(props.game.regex.rows[rowIndex], collapse(input.value[rowIndex]));
+        return test(game.regex.rows[rowIndex], collapse(input.value[rowIndex]));
     };
 
     const navigate = (direction: Direction) => {
@@ -121,10 +124,10 @@
         if (direction === Direction.RIGHT) target.col = source.col + 1;
 
         // second pass: handle overflows
-        if (target.row === props.game.size) target = { row: 0, col: target.col + 1 };
-        else if (target.col === props.game.size) target = { row: target.row + 1, col: 0 };
-        else if (target.row === -1) target = { row: props.game.size - 1, col: target.col - 1 };
-        else if (target.col === -1) target = { row: target.row - 1, col: props.game.size - 1 };
+        if (target.row === game.size) target = { row: 0, col: target.col + 1 };
+        else if (target.col === game.size) target = { row: target.row + 1, col: 0 };
+        else if (target.row === -1) target = { row: game.size - 1, col: target.col - 1 };
+        else if (target.col === -1) target = { row: target.row - 1, col: game.size - 1 };
 
         focus(target.row, target.col);
     };
@@ -137,7 +140,7 @@
     const keyListener = (e: KeyboardEvent) => {
         if (activeCell.value === null) return;
 
-        if (includes(toUpper(e.key), props.game.allSymbols)) {
+        if (includes(toUpper(e.key), game.allSymbols)) {
             e.stopPropagation();
             update(toUpper(e.key));
             navigate(Direction.RIGHT);
