@@ -84,6 +84,11 @@
 
     /* INIT */
     const keyListener = (e: KeyboardEvent) => {
+        if (e.key === 'd') {
+            toggleDarkmode();
+            e.preventDefault();
+        }
+
         if (e.key === 'r') {
             toggleRotation();
             e.preventDefault();
