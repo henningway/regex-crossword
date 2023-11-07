@@ -54,7 +54,7 @@
 
     /* REFS */
     const darkmode = ref<boolean>(document.querySelector('html')?.classList[0] === 'dark');
-    const options = ref<Options>({ solution: false, rotate: false });
+    const options = ref<Options>({ solution: false, rotate: true });
 
     /* METHODS */
     const toggleSolution = () => (options.value = { ...options.value, solution: !options.value.solution });

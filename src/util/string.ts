@@ -1,5 +1,21 @@
-import { uniq, split, times, chain, pluck, filter, descend, prop, sortBy, reverse, pipe, join } from 'ramda';
 import { SuffixTree } from '@/util/suffix-tree';
+import {
+    chain,
+    filter,
+    head,
+    join,
+    last,
+    map,
+    match,
+    pipe,
+    pluck,
+    prop,
+    reverse,
+    sortBy,
+    split,
+    times,
+    uniq
+} from 'ramda';
 
 export const collapse = join('');
 export const expand = split('');
@@ -10,6 +26,14 @@ export function matches(substring: string, value: string): RegExpMatchArray[] {
 
 export function matchLength(substring: string, value: string): number {
     return matches(substring, value).length;
+}
+
+export function nextOrPrevSymbol(anchor: string, value: string, next: boolean): string[] {
+    return pipe<string[], string[], string[], string[]>(
+        match(new RegExp(next ? `${anchor}.` : `.${anchor}`, 'g')),
+        map<string, string>(next ? last : head),
+        uniq
+    )(value);
 }
 
 /**

@@ -61,7 +61,7 @@
                         :class="{ 'text-green-600': checkColRegex(colIndex) }"
                         :style="{ height: CELL_PX + 'px' }"
                     >
-                        {{ slice(1, -1, game.regex.columns[colIndex].source) }}
+                        {{ trimRegex(game.regex.columns[colIndex]) }}
                     </div>
                 </div>
 
@@ -71,7 +71,7 @@
                     :class="{ 'text-green-600': checkRowRegex(rowIndex) }"
                     :style="{ height: CELL_PX + 'px' }"
                 >
-                    {{ slice(1, -1, game.regex.rows[rowIndex].source) }}
+                    {{ trimRegex(game.regex.rows[rowIndex]) }}
                 </div>
             </div>
         </template>
@@ -83,7 +83,7 @@
     import type { Options } from '@/type/common';
     import { Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
-    import { always as _, equals, includes, slice, test, toUpper, transpose } from 'ramda';
+    import { equals, includes, pipe, replace, test, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
 
     const CELL_PX = 40;
@@ -148,6 +148,8 @@
 
         focus(target.row, target.col);
     };
+
+    const trimRegex = (regex: RegExp): string => pipe(replace(/^\.\*/, ''), replace(/\.\*$/, ''))(regex.source);
 
     const update = (value: string) => {
         if (activeCell.value === null) return;

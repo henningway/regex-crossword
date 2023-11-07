@@ -1,6 +1,13 @@
 import { randomElement, randomSubset, repeatFunction } from '@/util/common';
-import { all, flip, init, join, map, reduce, repeat, test, uniqBy } from 'ramda';
-import { symbols, repeatedSubstringsWithoutOverlap, matchLength, collapse, expand } from '@/util/string';
+import {
+    collapse,
+    expand,
+    matchLength,
+    nextOrPrevSymbol,
+    repeatedSubstringsWithoutOverlap,
+    symbols
+} from '@/util/string';
+import { all, flip, init, join, map, reduce, repeat, tail, test, uniqBy, xprod } from 'ramda';
 
 /**
  * Provides a number of characteristics describing given string.
@@ -61,6 +68,34 @@ function regexRandomSymbols(value: string): RegExp {
 }
 
 /**
+ * Reveals the next symbol(s) to the occurence of an anchor symbol.
+ *
+ * Ex.: MISSISSIPPI: /^([^M|MI])*$/
+ */
+function regexNextSymbol(value: string): RegExp {
+    const allSymbols = symbols(init(value));
+    const anchorSymbol = randomElement(allSymbols);
+    const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, true);
+
+    return new RegExp(`(^${anchorSymbol}|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})`, 'g');
+}
+
+/**
+ * Reveals the previous symbol(s) to the occurence of an anchor symbol.
+ *
+ * Ex.: MISSISSIPPI: /^([^I|MI|SI|PI])*$/
+ */
+function regexPreviousSymbol(value: string): RegExp {
+    const allSymbols = symbols(tail(value));
+    const anchorSymbol = randomElement(allSymbols);
+    const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, false);
+
+    console.log(nextSymbols);
+
+    return new RegExp(`(^${anchorSymbol}|${join('|', map(collapse, xprod(nextSymbols, [anchorSymbol])))})`, 'g');
+}
+
+/**
  * Produces a RegExp for given value.
  */
 export function guessRegex(value: string): RegExp {
@@ -69,9 +104,9 @@ export function guessRegex(value: string): RegExp {
     const candidates: (() => RegExp)[] = [];
 
     if (c.longestRepeat.length >= 2) candidates.push(() => regexLongestRepeat(c.longestRepeat, c.longestRepeatCount));
-
     if (c.symbols.length >= 2) candidates.push(() => regexRandomSubsetOfSymbols(c.symbols));
-
+    candidates.push(() => regexPreviousSymbol(value));
+    candidates.push(() => regexNextSymbol(value));
     candidates.push(() => regexRandomSymbols(value));
 
     return randomElement(candidates)();
@@ -121,6 +156,24 @@ if (import.meta.vitest) {
         const value = 'MISSISSIPPI';
 
         const re = regexRandomSymbols(value);
+
+        expect(test(re, value)).toBe(true);
+    });
+
+    it('can generate a regex that reveals the next symbol(s) to an anchor symbol', () => {
+        const value = 'MISSISSIPPI';
+
+        const re = regexNextSymbol(value);
+
+        expect(test(re, value)).toBe(true);
+    });
+
+    it('can generate a regex that reveals the previous symbol(s) to an anchor symbol', () => {
+        const value = 'MISSISSIPPI';
+
+        const re = regexPreviousSymbol(value);
+
+        console.log(re);
 
         expect(test(re, value)).toBe(true);
     });
