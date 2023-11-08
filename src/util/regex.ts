@@ -138,7 +138,7 @@ export function guessRegex(value: string): RegExp {
     ];
 
     const applicableGenerators: Generator[] = filter((gen) => gen.condition, generators);
-    const weightedGenerators: Generator[] = chain((gen) => repeat(gen, gen.weight), applicableGenerators); //
+    const weightedGenerators: Generator[] = chain((gen) => repeat(gen, gen.weight), applicableGenerators);
 
     return randomElement(weightedGenerators).handler();
 }

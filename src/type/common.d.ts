@@ -12,17 +12,20 @@ export interface BoardUpdate {
 export interface Game {
     allSymbols: string[];
     draftedSymbols: string[];
+    entropy: number;
     board: Board;
     regex: {
         rows: RegExp[];
         columns: RegExp[];
     };
     undoIndex: number;
+    unusedSymbols: string[];
     userInput: BoardUpdate[];
     size: number;
 }
 
 export interface Options {
+    gaussian: boolean;
     size: number;
     solution: boolean;
     rotate: boolean;

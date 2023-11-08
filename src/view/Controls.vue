@@ -58,10 +58,17 @@
                 />
             </div>
 
+            <ToggleButton
+                :value="options.gaussian"
+                @update="toggleGaussian"
+            >
+                Gaussian
+            </ToggleButton>
+
             <button
                 type="button"
                 class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                @click="game.new(options.size)"
+                @click="game.new(options.size, options.gaussian)"
             >
                 Create
             </button>
@@ -79,9 +86,10 @@
 
     /* REFS */
     const darkmode = ref<boolean>(document.querySelector('html')?.classList[0] === 'dark');
-    const options = ref<Options>({ solution: false, rotate: true, size: 7 });
+    const options = ref<Options>({ gaussian: true, solution: false, rotate: true, size: 7 });
 
     /* METHODS */
+    const toggleGaussian = () => (options.value = { ...options.value, gaussian: !options.value.gaussian });
     const toggleSolution = () => (options.value = { ...options.value, solution: !options.value.solution });
     const toggleRotation = () => (options.value = { ...options.value, rotate: !options.value.rotate });
 

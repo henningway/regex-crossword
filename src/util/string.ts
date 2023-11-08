@@ -15,11 +15,32 @@ import {
     sortBy,
     split,
     times,
-    uniq
+    uniq,
+    values
 } from 'ramda';
 
 export const collapse = join('');
 export const expand = split('');
+
+/**
+ * Calculates the Shannon entropy for given string.
+ *
+ * https://gist.github.com/jabney/5018b4adc9b2bf488696
+ */
+export function entropy(value: string) {
+    type Frequencies = { [c: string]: number };
+
+    const len = value.length;
+
+    const frequencies: Frequencies = reduce(
+        (freq: Frequencies, c: string): Frequencies => ({ ...freq, [c]: (freq[c] || 0) + 1 }),
+        {},
+        expand(value)
+    );
+
+    // sum the frequency of each character
+    return reduce((sum, f) => sum - (f / len) * Math.log2(f / len), 0, values(frequencies));
+}
 
 export function matches(substring: string, value: string): RegExpMatchArray[] {
     return [...value.matchAll(new RegExp(substring, 'g'))];

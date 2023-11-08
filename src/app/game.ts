@@ -20,8 +20,8 @@ export const useGameStore = defineStore('game', {
             this.userInput.push(update);
             this.updateUserIndex(this.userInput.length);
         },
-        new(size: number) {
-            this.$patch(generateGame(size));
+        new(size: number, gaussian: boolean) {
+            this.$patch(generateGame(size, gaussian));
         },
         updateUserIndex(value: number) {
             this.undoIndex = value;

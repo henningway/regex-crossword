@@ -1,4 +1,7 @@
 <template>
+    <div class="fixed top-0 right-0 text-sm text-gray-400 dark:text-slate-600 p-2 leading-none">
+        Entropy: {{ take(4, game.entropy.toString()) }}
+    </div>
     <div
         class="text-xl transition-transform border border-gray-900 dark:border-slate-400"
         :class="{ '-rotate-45': options.rotate }"
@@ -83,7 +86,7 @@
     import type { Options } from '@/type/common';
     import { Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
-    import { equals, includes, pipe, replace, test, toUpper, transpose } from 'ramda';
+    import { equals, includes, pipe, replace, take, test, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
 
     const CELL_PX = 40;
