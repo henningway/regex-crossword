@@ -4,8 +4,10 @@ export function randomElement<T>(list: T[]): T {
     return list[Math.floor(Math.random() * list.length)];
 }
 
-export function randomSubset<T>(list: T[]): T[] {
-    return take(Math.ceil(Math.random() * list.length), shuffle(list));
+export function randomSubset<T>(list: T[], count?: number): T[] {
+    count = count ?? Math.random() * list.length;
+
+    return take(Math.ceil(count), shuffle(list));
 }
 
 export function repeatFunction<T>(f: () => T, n: number): T[] {

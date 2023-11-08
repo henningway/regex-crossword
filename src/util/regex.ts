@@ -7,24 +7,7 @@ import {
     repeatedSubstringsWithoutOverlap,
     symbols
 } from '@/util/string';
-import {
-    all,
-    chain,
-    filter,
-    flip,
-    init,
-    join,
-    map,
-    pluck,
-    propEq,
-    reduce,
-    repeat,
-    sum,
-    tail,
-    test,
-    uniqBy,
-    xprod
-} from 'ramda';
+import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, uniqBy, xprod } from 'ramda';
 
 /**
  * Provides a number of characteristics describing given string.
@@ -159,7 +142,7 @@ if (import.meta.vitest) {
         const uniqRes = uniqBy((re: RegExp) => re.source, res);
 
         expect(all(testF(value), res)).toBe(true);
-        expect(uniqRes.length).toBeGreaterThan(20);
+        expect(uniqRes.length).toBeGreaterThan(30);
     });
 
     it('can generate a regex that reveals the longest repeating non-overlapping sequence of symbols', () => {

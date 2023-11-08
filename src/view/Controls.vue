@@ -40,21 +40,46 @@
                 @input="(event) => game.updateUserIndex(parseInt((event.target as HTMLInputElement).value))"
                 :value="game.undoIndex"
             />
+
+            <div class="w-[1px] h-[35px] bg-gray-200 dark:bg-gray-700 -mt-[10px] -mb-[10px]" />
+
+            New game:
+
+            <div class="flex items-center gap-2">
+                <label for="size"> Size </label>
+                <input
+                    id="size"
+                    class="w-[60px] p-2 border border-gray-300 rounded-md bg-gray-50 sm:text-xs dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white outline-none"
+                    type="number"
+                    min="2"
+                    max="12"
+                    v-model="options.size"
+                    @keydown.prevent
+                />
+            </div>
+
+            <button
+                type="button"
+                class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                @click="game.new(options.size)"
+            >
+                Create
+            </button>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { ref, onBeforeUnmount } from 'vue';
+    import { useGameStore } from '@/app/game';
     import type { Options } from '@/type/common';
     import ToggleButton from '@/view/ToggleButton.vue';
-    import { useGameStore } from '@/app/game';
+    import { onBeforeUnmount, ref } from 'vue';
 
     const game = useGameStore();
 
     /* REFS */
     const darkmode = ref<boolean>(document.querySelector('html')?.classList[0] === 'dark');
-    const options = ref<Options>({ solution: false, rotate: true });
+    const options = ref<Options>({ solution: false, rotate: true, size: 7 });
 
     /* METHODS */
     const toggleSolution = () => (options.value = { ...options.value, solution: !options.value.solution });

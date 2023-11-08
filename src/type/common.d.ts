@@ -11,6 +11,7 @@ export interface BoardUpdate {
 
 export interface Game {
     allSymbols: string[];
+    draftedSymbols: string[];
     board: Board;
     regex: {
         rows: RegExp[];
@@ -22,6 +23,7 @@ export interface Game {
 }
 
 export interface Options {
+    size: number;
     solution: boolean;
     rotate: boolean;
 }

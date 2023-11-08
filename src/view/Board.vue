@@ -151,7 +151,8 @@
 
     const trimRegex = (regex: RegExp): string => {
         if (regex.source === '^.*$') return '.*';
-        return pipe(replace(/^\^?(\.\*)?/, ''), replace(/(\.\*)?\$?$/, ''))(regex.source);
+        return pipe(replace(/^\^?/, ''), replace(/\$?$/, ''))(regex.source); // replaces only ^ and $
+        // return pipe(replace(/^\^?(\.\*)?/, ''), replace(/(\.\*)?\$?$/, ''))(regex.source); // replaces .* at start and end as well
     };
 
     const update = (value: string) => {

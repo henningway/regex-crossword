@@ -20,6 +20,9 @@ export const useGameStore = defineStore('game', {
             this.userInput.push(update);
             this.updateUserIndex(this.userInput.length);
         },
+        new(size: number) {
+            this.$patch(generateGame(size));
+        },
         updateUserIndex(value: number) {
             this.undoIndex = value;
         }
