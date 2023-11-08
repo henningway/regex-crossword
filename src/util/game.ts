@@ -7,7 +7,7 @@ import { map, pipe, times, transpose } from 'ramda';
 const alphabet = symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
 export function generateGame(size: number): Game {
-    const availableSymbols = randomSubset(alphabet, 5 + size);
+    const availableSymbols = randomSubset(alphabet, 5 + Math.floor(size / 2));
 
     const board: Board = times(() => times(() => randomElement(availableSymbols), size), size);
 

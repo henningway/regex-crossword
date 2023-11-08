@@ -10,6 +10,7 @@ import {
     pipe,
     pluck,
     prop,
+    reduce,
     reverse,
     sortBy,
     split,
@@ -40,7 +41,18 @@ export function nextOrPrevSymbol(anchor: string, value: string, next: boolean): 
  * Provides all unique symbols in given string.
  */
 export function symbols(value: string): string[] {
-    return uniq(split('', value));
+    return uniq(expand(value));
+}
+
+/**
+ * Provides the symbols in order.
+ */
+export function symbolsInOrder(value: string): string[] {
+    return reduce(
+        (acc: string[], val: string): string[] => (last(acc) === val ? acc : [...acc, val]),
+        [],
+        expand(value)
+    );
 }
 
 /**

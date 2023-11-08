@@ -5,7 +5,8 @@ import {
     matchLength,
     nextOrPrevSymbol,
     repeatedSubstringsWithoutOverlap,
-    symbols
+    symbols,
+    symbolsInOrder
 } from '@/util/string';
 import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, uniqBy, xprod } from 'ramda';
 
@@ -14,10 +15,15 @@ import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, 
  */
 function stringCharacteristics(value: string) {
     const repeats = repeatedSubstringsWithoutOverlap(value);
+    const allSymbols = symbols(value);
+    const allSymbolsInOrder = symbolsInOrder(value);
 
     return {
         value,
-        symbols: symbols(value),
+        symbols: allSymbols,
+        symbolCount: allSymbols.length,
+        symbolsInOrder: allSymbolsInOrder,
+        symbolsInOrderCount: allSymbolsInOrder.length,
         longestRepeat: repeats[0] ?? '',
         longestRepeatCount: matchLength(repeats[0] ?? '', value),
         repeats
@@ -94,6 +100,15 @@ function regexPreviousSymbol(value: string): RegExp {
 }
 
 /**
+ * Reveals the order of symbols.
+ *
+ * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
+ */
+function regexSymbolOrder(value: string): RegExp {
+    return new RegExp(`^${join('+', symbolsInOrder(value))}+$`);
+}
+
+/**
  * Produces a RegExp for given value.
  */
 export function guessRegex(value: string): RegExp {
@@ -109,9 +124,14 @@ export function guessRegex(value: string): RegExp {
         {
             condition: c.longestRepeat.length >= 2,
             handler: () => regexLongestRepeat(c.longestRepeat, c.longestRepeatCount),
+            weight: 8
+        },
+        {
+            condition: 2 <= c.symbolsInOrderCount && c.symbolsInOrderCount <= 3,
+            handler: () => regexSymbolOrder(value),
             weight: 4
         },
-        { condition: c.symbols.length >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
+        { condition: c.symbolCount >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
         { condition: true, handler: () => regexPreviousSymbol(value), weight: 1 },
         { condition: true, handler: () => regexNextSymbol(value), weight: 1 },
         { condition: true, handler: () => regexRandomSymbols(value), weight: 2 }
@@ -142,7 +162,7 @@ if (import.meta.vitest) {
         const uniqRes = uniqBy((re: RegExp) => re.source, res);
 
         expect(all(testF(value), res)).toBe(true);
-        expect(uniqRes.length).toBeGreaterThan(30);
+        expect(uniqRes.length).toBeGreaterThan(25);
     });
 
     it('can generate a regex that reveals the longest repeating non-overlapping sequence of symbols', () => {
@@ -183,6 +203,14 @@ if (import.meta.vitest) {
         const value = 'MISSISSIPPI';
 
         const re = regexPreviousSymbol(value);
+
+        expect(test(re, value)).toBe(true);
+    });
+
+    it('can generate a regex that reveals order of symbols', () => {
+        const value = 'MISSISSIPPI';
+
+        const re = regexSymbolOrder(value);
 
         expect(test(re, value)).toBe(true);
     });
