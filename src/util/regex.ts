@@ -7,7 +7,24 @@ import {
     repeatedSubstringsWithoutOverlap,
     symbols
 } from '@/util/string';
-import { all, flip, init, join, map, reduce, repeat, tail, test, uniqBy, xprod } from 'ramda';
+import {
+    all,
+    chain,
+    filter,
+    flip,
+    init,
+    join,
+    map,
+    pluck,
+    propEq,
+    reduce,
+    repeat,
+    sum,
+    tail,
+    test,
+    uniqBy,
+    xprod
+} from 'ramda';
 
 /**
  * Provides a number of characteristics describing given string.
@@ -90,8 +107,6 @@ function regexPreviousSymbol(value: string): RegExp {
     const anchorSymbol = randomElement(allSymbols);
     const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, false);
 
-    console.log(nextSymbols);
-
     return new RegExp(`(^${anchorSymbol}|${join('|', map(collapse, xprod(nextSymbols, [anchorSymbol])))})`, 'g');
 }
 
@@ -101,15 +116,28 @@ function regexPreviousSymbol(value: string): RegExp {
 export function guessRegex(value: string): RegExp {
     const c = stringCharacteristics(value);
 
-    const candidates: (() => RegExp)[] = [];
+    interface Generator {
+        condition: boolean;
+        handler: () => RegExp;
+        weight: number;
+    }
 
-    if (c.longestRepeat.length >= 2) candidates.push(() => regexLongestRepeat(c.longestRepeat, c.longestRepeatCount));
-    if (c.symbols.length >= 2) candidates.push(() => regexRandomSubsetOfSymbols(c.symbols));
-    candidates.push(() => regexPreviousSymbol(value));
-    candidates.push(() => regexNextSymbol(value));
-    candidates.push(() => regexRandomSymbols(value));
+    const generators: Generator[] = [
+        {
+            condition: c.longestRepeat.length >= 2,
+            handler: () => regexLongestRepeat(c.longestRepeat, c.longestRepeatCount),
+            weight: 4
+        },
+        { condition: c.symbols.length >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
+        { condition: true, handler: () => regexPreviousSymbol(value), weight: 1 },
+        { condition: true, handler: () => regexNextSymbol(value), weight: 1 },
+        { condition: true, handler: () => regexRandomSymbols(value), weight: 2 }
+    ];
 
-    return randomElement(candidates)();
+    const applicableGenerators: Generator[] = filter((gen) => gen.condition, generators);
+    const weightedGenerators: Generator[] = chain((gen) => repeat(gen, gen.weight), applicableGenerators); //
+
+    return randomElement(weightedGenerators).handler();
 }
 
 if (import.meta.vitest) {
@@ -172,8 +200,6 @@ if (import.meta.vitest) {
         const value = 'MISSISSIPPI';
 
         const re = regexPreviousSymbol(value);
-
-        console.log(re);
 
         expect(test(re, value)).toBe(true);
     });

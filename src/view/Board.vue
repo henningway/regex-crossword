@@ -149,7 +149,10 @@
         focus(target.row, target.col);
     };
 
-    const trimRegex = (regex: RegExp): string => pipe(replace(/^\.\*/, ''), replace(/\.\*$/, ''))(regex.source);
+    const trimRegex = (regex: RegExp): string => {
+        if (regex.source === '^.*$') return '.*';
+        return pipe(replace(/^\^?(\.\*)?/, ''), replace(/(\.\*)?\$?$/, ''))(regex.source);
+    };
 
     const update = (value: string) => {
         if (activeCell.value === null) return;
