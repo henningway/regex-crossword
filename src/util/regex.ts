@@ -6,7 +6,7 @@ import {
     expand,
     longestPalindrome,
     matchLength,
-    nextOrPrevSymbol,
+    nextOrPrevSymbols,
     repeatedSubstringsWithoutOverlap,
     symbols,
     symbolsInOrder
@@ -17,13 +17,14 @@ import {
     curry,
     filter,
     flip,
+    head,
     init,
     join,
+    last,
     map,
     pluck,
     reduce,
     repeat,
-    tail,
     test,
     times,
     uniqBy,
@@ -107,13 +108,13 @@ function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> 
  * Ex.: MISSISSIPPI: /^([^M|MI])*$/
  */
 function regexNextSymbol(value: string): RegEx<RegExType.NEXT_SYMBOL> {
-    const allSymbols = symbols(init(value));
-    const anchorSymbol = randomElement(allSymbols);
-    const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, true);
+    const draftSymbols = filter((s) => s !== last(value), symbols(value));
+    const anchorSymbol = randomElement(draftSymbols);
+    const nextSymbols = nextOrPrevSymbols(anchorSymbol, value, true);
 
     return makeRegEx(
         RegExType.NEXT_SYMBOL,
-        `(^${anchorSymbol}|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})`,
+        `^([^${anchorSymbol}]|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})+$`,
         'g'
     );
 }
@@ -124,13 +125,13 @@ function regexNextSymbol(value: string): RegEx<RegExType.NEXT_SYMBOL> {
  * Ex.: MISSISSIPPI: /^([^I|MI|SI|PI])*$/
  */
 function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
-    const allSymbols = symbols(tail(value));
-    const anchorSymbol = randomElement(allSymbols);
-    const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, false);
+    const draftSymbols = filter((s) => s !== head(value), symbols(value));
+    const anchorSymbol = randomElement(draftSymbols);
+    const prevSymbols = nextOrPrevSymbols(anchorSymbol, value, false);
 
     return makeRegEx(
         RegExType.PREVIOUS_SYMBOL,
-        `(^${anchorSymbol}|${join('|', map(collapse, xprod(nextSymbols, [anchorSymbol])))})`,
+        `^([^${anchorSymbol}]|${join('|', map(collapse, xprod(prevSymbols, [anchorSymbol])))})+$`,
         'g'
     );
 }

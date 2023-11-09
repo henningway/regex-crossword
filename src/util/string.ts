@@ -1,5 +1,8 @@
+import { IndexedSymbol } from '@/type/common';
 import { SuffixTree } from '@/util/suffix-tree';
 import {
+    add,
+    addIndex,
     chain,
     filter,
     head,
@@ -14,6 +17,7 @@ import {
     reverse,
     sortBy,
     split,
+    subtract,
     times,
     uniq,
     values
@@ -50,12 +54,19 @@ export function matchLength(substring: string, value: string): number {
     return matches(substring, value).length;
 }
 
-export function nextOrPrevSymbol(anchor: string, value: string, next: boolean): string[] {
-    return pipe<string[], string[], string[], string[]>(
-        match(new RegExp(next ? `${anchor}.` : `.${anchor}`, 'g')),
-        map<string, string>(next ? last : head),
-        uniq
-    )(value);
+export function nextOrPrevSymbols(anchor: string, value: string, next: boolean): string[] {
+    const anchors: IndexedSymbol[] = filter(
+        (e) => e.symbol === anchor,
+        // @ts-ignore
+        mapI((symbol: string, position: number) => ({ symbol, position }), expand(value)) as IndexedSymbol[]
+    );
+
+    const relativeIndexes: number[] = filter(
+        (index: number) => 0 <= index && index < value.length,
+        map(add(next ? 1 : -1), pluck('position', anchors))
+    );
+
+    return uniq(map((index) => value[index], relativeIndexes));
 }
 
 /**
@@ -160,6 +171,8 @@ export function substringIndexes(substring: string, value: string): number[] {
     return pluck('index', matches(substring, value)) as number[];
 }
 
+const mapI = addIndex(map);
+
 if (import.meta.vitest) {
     const { it, expect } = import.meta.vitest;
 
@@ -209,5 +222,16 @@ if (import.meta.vitest) {
     it('can find the longest palindrome', () => {
         expect(longestPalindrome('BANANA')).toBe('ANANA');
         expect(longestPalindrome('MISSISSIPPI')).toBe('ISSISSI');
+    });
+
+    it('can find next and previous symbols to a given anchor', () => {
+        expect(nextOrPrevSymbols('M', 'MISSISSIPPI', true)).toStrictEqual(['I']);
+        expect(nextOrPrevSymbols('M', 'MISSISSIPPI', false)).toStrictEqual([]);
+        expect(nextOrPrevSymbols('I', 'MISSISSIPPI', true)).toStrictEqual(['S', 'P']);
+        expect(nextOrPrevSymbols('I', 'MISSISSIPPI', false)).toStrictEqual(['M', 'S', 'P']);
+        expect(nextOrPrevSymbols('S', 'MISSISSIPPI', true)).toStrictEqual(['S', 'I']);
+        expect(nextOrPrevSymbols('S', 'MISSISSIPPI', false)).toStrictEqual(['I', 'S']);
+        expect(nextOrPrevSymbols('P', 'MISSISSIPPI', true)).toStrictEqual(['P', 'I']);
+        expect(nextOrPrevSymbols('P', 'MISSISSIPPI', false)).toStrictEqual(['I', 'P']);
     });
 }
