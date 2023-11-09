@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
     import { useGameStore } from '@/app/game';
-    import type { Options } from '@/type/common';
+    import type { Options, RegEx } from '@/type/common';
     import { Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
     import { equals, includes, pipe, replace, take, test, toUpper, transpose } from 'ramda';
@@ -101,10 +101,10 @@
 
     /* METHODS */
     const checkColRegex = (colIndex: number): boolean =>
-        test(game.regex.columns[colIndex], collapse(transpose(game.userBoard)[colIndex]));
+        test(game.regex.columns[colIndex].re, collapse(transpose(game.userBoard)[colIndex]));
 
     const checkRowRegex = (rowIndex: number): boolean =>
-        test(game.regex.rows[rowIndex], collapse(game.userBoard[rowIndex]));
+        test(game.regex.rows[rowIndex].re, collapse(game.userBoard[rowIndex]));
 
     const focus = (row: number, col: number) => {
         inputRefs.value.find((e) => e.id === `cell-${row}-${col}`)?.focus();
@@ -152,7 +152,7 @@
         focus(target.row, target.col);
     };
 
-    const trimRegex = (regex: RegExp): string => {
+    const trimRegex = (regex: RegEx): string => {
         if (regex.source === '^.*$') return '.*';
         return pipe(replace(/^\^?/, ''), replace(/\$?$/, ''))(regex.source); // replaces only ^ and $
         // return pipe(replace(/^\^?(\.\*)?/, ''), replace(/(\.\*)?\$?$/, ''))(regex.source); // replaces .* at start and end as well

@@ -1,3 +1,5 @@
+import { RegEx } from '@/type/common';
+import { RegExType } from '@/type/enum';
 import { randomElement, randomSubset, repeatFunction } from '@/util/common';
 import {
     collapse,
@@ -9,7 +11,24 @@ import {
     symbols,
     symbolsInOrder
 } from '@/util/string';
-import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, times, uniqBy, xprod } from 'ramda';
+import {
+    all,
+    chain,
+    curry,
+    filter,
+    flip,
+    init,
+    join,
+    map,
+    pluck,
+    reduce,
+    repeat,
+    tail,
+    test,
+    times,
+    uniqBy,
+    xprod
+} from 'ramda';
 
 /**
  * Provides a number of characteristics describing given string.
@@ -32,13 +51,19 @@ function stringCharacteristics(value: string) {
     };
 }
 
+const makeRegEx = curry(<T extends RegExType>(type: T, source: string, flags = ''): RegEx<RegExType> => {
+    const re = new RegExp(source, flags);
+
+    return { source: re.source, type, re };
+});
+
 /**
  * Revelas the longest repeating non-overlapping sequence of symbols. Uses capturing to make the regex harder to read.
  *
  * Ex.: MISSISSIPPI => /^.*(ISS).*\1.*$/
  */
-function regexLongestRepeat(value: string, count: number): RegExp {
-    return new RegExp(`^.*${join('.*', [`(${value})`, ...repeat('\\1', count - 1)])}.*$`);
+function regexLongestRepeat(value: string, count: number): RegEx<RegExType.LONGEST_REPEAT> {
+    return makeRegEx(RegExType.LONGEST_REPEAT, `^.*${join('.*', [`(${value})`, ...repeat('\\1', count - 1)])}.*$`);
 }
 
 /**
@@ -46,13 +71,14 @@ function regexLongestRepeat(value: string, count: number): RegExp {
  *
  * Ex.: MISSISSIPPI => /^.*[SMI]*.*$/
  */
-function regexRandomSubsetOfSymbols(symbols: string[]): RegExp {
+function regexRandomSubsetOfSymbols(symbols: string[]): RegEx<RegExType.SYMBOL_SUBSET> {
     const subset = randomSubset(symbols);
+    const make = makeRegEx(RegExType.SYMBOL_SUBSET);
 
-    if (subset.length === 1) return new RegExp(`^.*${subset[0]}.*$`);
-    if (subset.length === symbols.length) return new RegExp(`^[${join('', subset)}]+$`);
+    if (subset.length === 1) return make(`^.*${subset[0]}.*$`);
+    if (subset.length === symbols.length) make(`^[${join('', subset)}]+$`);
 
-    return new RegExp(`^.*[${collapse(subset)}]+.*$`);
+    return make(`^.*[${collapse(subset)}]+.*$`);
 }
 
 /**
@@ -60,7 +86,7 @@ function regexRandomSubsetOfSymbols(symbols: string[]): RegExp {
  *
  * Ex.: MISSISSIPPI => /^.*S.*I.PI$/
  */
-function regexRandomSymbols(value: string): RegExp {
+function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> {
     const threshold = 0.25;
 
     const pattern: string[] = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
@@ -72,7 +98,7 @@ function regexRandomSymbols(value: string): RegExp {
         pattern
     );
 
-    return new RegExp(`^${collapse(patternReduced)}$`);
+    return makeRegEx(RegExType.SYMBOL_POSITIONS, `^${collapse(patternReduced)}$`);
 }
 
 /**
@@ -80,12 +106,16 @@ function regexRandomSymbols(value: string): RegExp {
  *
  * Ex.: MISSISSIPPI: /^([^M|MI])*$/
  */
-function regexNextSymbol(value: string): RegExp {
+function regexNextSymbol(value: string): RegEx<RegExType.NEXT_SYMBOL> {
     const allSymbols = symbols(init(value));
     const anchorSymbol = randomElement(allSymbols);
     const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, true);
 
-    return new RegExp(`(^${anchorSymbol}|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})`, 'g');
+    return makeRegEx(
+        RegExType.NEXT_SYMBOL,
+        `(^${anchorSymbol}|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})`,
+        'g'
+    );
 }
 
 /**
@@ -93,12 +123,16 @@ function regexNextSymbol(value: string): RegExp {
  *
  * Ex.: MISSISSIPPI: /^([^I|MI|SI|PI])*$/
  */
-function regexPreviousSymbol(value: string): RegExp {
+function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
     const allSymbols = symbols(tail(value));
     const anchorSymbol = randomElement(allSymbols);
     const nextSymbols = nextOrPrevSymbol(anchorSymbol, value, false);
 
-    return new RegExp(`(^${anchorSymbol}|${join('|', map(collapse, xprod(nextSymbols, [anchorSymbol])))})`, 'g');
+    return makeRegEx(
+        RegExType.PREVIOUS_SYMBOL,
+        `(^${anchorSymbol}|${join('|', map(collapse, xprod(nextSymbols, [anchorSymbol])))})`,
+        'g'
+    );
 }
 
 /**
@@ -106,8 +140,8 @@ function regexPreviousSymbol(value: string): RegExp {
  *
  * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
  */
-function regexSymbolOrder(value: string): RegExp {
-    return new RegExp(`^${join('+', symbolsInOrder(value))}+$`);
+function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
+    return makeRegEx(RegExType.SYMBOL_ORDER, `^${join('+', symbolsInOrder(value))}+$`);
 }
 
 /**
@@ -115,25 +149,25 @@ function regexSymbolOrder(value: string): RegExp {
  *
  *  * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
  */
-function regexLongestPalindrome(value: string): RegExp {
+function regexLongestPalindrome(value: string): RegEx<RegExType.LONGEST_PALINDROME> {
     const len = longestPalindrome(value).length;
     const halfLen = Math.floor(len / 2);
     const isOdd = len % 2 === 1;
 
     const [base, mirror] = [collapse(repeat('(.)', halfLen)), collapse(times((i) => `(\\${halfLen - i})`, halfLen))];
 
-    return new RegExp(`.*${base}${isOdd ? '.' : ''}${mirror}.*`);
+    return makeRegEx(RegExType.LONGEST_PALINDROME, `.*${base}${isOdd ? '.' : ''}${mirror}.*`);
 }
 
 /**
  * Produces a RegExp for given value.
  */
-export function guessRegex(value: string): RegExp {
+export function guessRegex(value: string): RegEx {
     const c = stringCharacteristics(value);
 
     interface Generator {
         condition: boolean;
-        handler: () => RegExp;
+        handler: () => RegEx;
         weight: number;
     }
 
@@ -156,7 +190,7 @@ export function guessRegex(value: string): RegExp {
         { condition: c.symbolCount >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
         { condition: true, handler: () => regexPreviousSymbol(value), weight: 1 },
         { condition: true, handler: () => regexNextSymbol(value), weight: 1 },
-        { condition: true, handler: () => regexRandomSymbols(value), weight: 2 }
+        { condition: true, handler: () => regexSymbolPositions(value), weight: 2 }
     ];
 
     const applicableGenerators: Generator[] = filter((gen) => gen.condition, generators);
@@ -175,16 +209,16 @@ if (import.meta.vitest) {
 
         const res = repeatFunction(() => guessRegex(value), 100);
 
-        expect(all(testF(value), res)).toBe(true);
+        expect(all(testF(value), pluck('re', res))).toBe(true);
     });
 
     it('will not guess the same pattern every time', () => {
         const value = collapse(randomSubset(symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 10));
 
         const res = repeatFunction(() => guessRegex(value), 100);
-        const uniqRes = uniqBy((re: RegExp) => re.source, res);
+        const uniqRes = uniqBy((re: RegExp) => re.source, pluck('re', res));
 
-        expect(all(testF(value), res)).toBe(true);
+        expect(all(testF(value), pluck('re', res))).toBe(true);
         expect(uniqRes.length).toBeGreaterThan(50);
     });
 
@@ -196,7 +230,7 @@ if (import.meta.vitest) {
         const re = regexLongestRepeat(repeats[0], matchLength(repeats[0], value));
 
         expect(re.source).toBe('^.*(ISS).*\\1.*$');
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals some of the contained symbols in no particular order', () => {
@@ -204,15 +238,15 @@ if (import.meta.vitest) {
 
         const re = regexRandomSubsetOfSymbols(symbols(value));
 
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals random symbols in correct order', () => {
         const value = 'MISSISSIPPI';
 
-        const re = regexRandomSymbols(value);
+        const re = regexSymbolPositions(value);
 
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals the next symbol(s) to an anchor symbol', () => {
@@ -220,7 +254,7 @@ if (import.meta.vitest) {
 
         const re = regexNextSymbol(value);
 
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals the previous symbol(s) to an anchor symbol', () => {
@@ -228,7 +262,7 @@ if (import.meta.vitest) {
 
         const re = regexPreviousSymbol(value);
 
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals order of symbols', () => {
@@ -236,7 +270,7 @@ if (import.meta.vitest) {
 
         const re = regexSymbolOrder(value);
 
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 
     it('can generate a regex that reveals the longest palindrome without revealing the involved symbols', () => {
@@ -245,6 +279,6 @@ if (import.meta.vitest) {
         const re = regexLongestPalindrome(value);
 
         expect(re.source).toBe('.*(.)(.)(.).(\\3)(\\2)(\\1).*'); // ISSISSI - the middle I is not repeated
-        expect(test(re, value)).toBe(true);
+        expect(test(re.re, value)).toBe(true);
     });
 }

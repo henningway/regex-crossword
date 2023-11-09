@@ -1,4 +1,4 @@
-import type { Board, Game } from '@/type/common';
+import type { Board, Game, RegEx } from '@/type/common';
 import { randomElement, randomSubset } from '@/util/common';
 import { randomGaussian } from '@/util/math';
 import { guessRegex } from '@/util/regex';
@@ -47,6 +47,6 @@ function columns(board: Board) {
     return transpose(board);
 }
 
-function generateRegexes(board: Board): RegExp[] {
+function generateRegexes(board: Board): RegEx[] {
     return map(pipe(collapse, guessRegex), board);
 }

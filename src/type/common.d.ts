@@ -1,3 +1,5 @@
+import { RegExType } from './enum';
+
 export type Board = string[][];
 
 /**
@@ -9,14 +11,17 @@ export interface BoardUpdate {
     value: string;
 }
 
+/**
+ * Describes one game of RegEx crossword including user input.
+ */
 export interface Game {
     allSymbols: string[];
     draftedSymbols: string[];
     entropy: number;
     board: Board;
     regex: {
-        rows: RegExp[];
-        columns: RegExp[];
+        rows: RegEx[];
+        columns: RegEx[];
     };
     undoIndex: number;
     unusedSymbols: string[];
@@ -24,9 +29,18 @@ export interface Game {
     size: number;
 }
 
+/**
+ * Describes options that are used for presentation and generation of games.
+ */
 export interface Options {
     gaussian: boolean;
     size: number;
     solution: boolean;
     rotate: boolean;
+}
+
+export interface RegEx<T extends RegExType = RegExType> {
+    re: RegExp;
+    source: string;
+    type: T;
 }
