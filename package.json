@@ -12,7 +12,10 @@
         "coverage": "vitest run --coverage",
         "build": "vite build",
         "dev": "vite",
-        "test": "vitest"
+        "style": "prettier --write .",
+        "stylecheck": "prettier --check .",
+        "test": "vitest",
+        "typecheck": "NODE_OPTIONS='--max_old_space_size=4000' vue-tsc --noEmit"
     },
     "dependencies": {
         "pinia": "2.1.7",
