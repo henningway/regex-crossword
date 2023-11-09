@@ -12,21 +12,31 @@ export interface BoardUpdate {
 }
 
 /**
- * Describes one game of RegEx crossword including user input.
+ * Describes one game of RegEx crossword including some meta information and user input.
  */
-export interface Game {
+export interface Game extends EssentialGame {
     allSymbols: string[];
     draftedSymbols: string[];
     entropy: number;
-    board: Board;
-    regex: {
-        rows: RegEx[];
-        columns: RegEx[];
-    };
-    undoIndex: number;
+    replayIndex: number;
+    solution: BoardUpdate[];
+    solutionIndex: number;
     unusedSymbols: string[];
     userInput: BoardUpdate[];
+}
+
+/**
+ * Describes one game of RegEx crossword.
+ */
+export interface EssentialGame {
+    board: Board;
+    regex: { rows: RegEx[]; columns: RegEx[] };
     size: number;
+}
+
+interface IndexedSymbol {
+    symbol: string;
+    position: number;
 }
 
 /**

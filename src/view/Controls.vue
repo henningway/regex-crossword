@@ -28,6 +28,21 @@
                 Solution
             </ToggleButton>
 
+            <template v-if="options.solution">
+                <div class="w-[1px] h-[35px] bg-gray-200 dark:bg-gray-700 -mt-[10px] -mb-[10px]" />
+
+                <label for="replay-slider">Solution:</label>
+                <input
+                    id="solution-slider"
+                    type="range"
+                    class="w-[200px] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700"
+                    min="0"
+                    :max="game.solution.length"
+                    @input="(event) => game.updateSolutionIndex(parseInt((event.target as HTMLInputElement).value))"
+                    :value="game.solutionIndex"
+                />
+            </template>
+
             <div class="w-[1px] h-[35px] bg-gray-200 dark:bg-gray-700 -mt-[10px] -mb-[10px]" />
 
             <label for="replay-slider">Replay:</label>
@@ -37,8 +52,8 @@
                 class="w-[200px] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700"
                 min="0"
                 :max="game.userInput.length"
-                @input="(event) => game.updateUserIndex(parseInt((event.target as HTMLInputElement).value))"
-                :value="game.undoIndex"
+                @input="(event) => game.updateReplayIndex(parseInt((event.target as HTMLInputElement).value))"
+                :value="game.replayIndex"
             />
 
             <div class="w-[1px] h-[35px] bg-gray-200 dark:bg-gray-700 -mt-[10px] -mb-[10px]" />

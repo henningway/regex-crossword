@@ -35,9 +35,10 @@
                         class="transition-transform text-gray-400 dark:text-gray-700 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
                     >
-                        {{ char }}
+                        {{ game.solutionBoard[rowIndex][colIndex] }}
                     </span>
 
+                    <!-- char typed by user -->
                     <span
                         class="transition-transform absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
@@ -45,7 +46,7 @@
                         {{ game.userBoard[rowIndex][colIndex] }}
                     </span>
 
-                    <!-- input -->
+                    <!-- (hidden) input -->
                     <input
                         ref="inputRefs"
                         type="text"

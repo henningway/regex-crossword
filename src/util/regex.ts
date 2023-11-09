@@ -98,7 +98,7 @@ function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> 
         pattern
     );
 
-    return makeRegEx(RegExType.SYMBOL_POSITIONS, `^${collapse(patternReduced)}$`);
+    return makeRegEx(RegExType.SYMBOL_POSITIONS, `${collapse(patternReduced)}`);
 }
 
 /**

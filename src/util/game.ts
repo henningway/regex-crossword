@@ -1,9 +1,10 @@
-import type { Board, Game, RegEx } from '@/type/common';
+import type { Board, BoardUpdate, Game, RegEx } from '@/type/common';
 import { randomElement, randomSubset } from '@/util/common';
 import { randomGaussian } from '@/util/math';
 import { guessRegex } from '@/util/regex';
 import { collapse, entropy, symbols } from '@/util/string';
-import { chain, difference, map, pipe, repeat, times, transpose } from 'ramda';
+import { assocPath, chain, difference, map, pipe, reduce, repeat, times, transpose } from 'ramda';
+import { generateSolution } from '@/util/solution';
 
 const alphabet = symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
@@ -16,17 +17,37 @@ export function generateGame(size: number, useGaussian = true): Game {
 
     const board: Board = times(() => times(() => randomElement(draftPool), size), size);
 
+    const essential = {
+        board,
+        regex: { rows: generateRegexes(board), columns: generateRegexes(columns(board)) },
+        size
+    };
+
     return {
+        ...essential,
         allSymbols: alphabet,
         draftedSymbols: availableSymbols, // the symbols that were actually used
         entropy: entropy(collapse(map(collapse, board))),
-        board,
-        regex: { rows: generateRegexes(board), columns: generateRegexes(columns(board)) },
-        undoIndex: 0,
+        solution: generateSolution(essential),
+        solutionIndex: 0,
+        replayIndex: 0,
         unusedSymbols: difference(availableSymbols, draftPool),
-        userInput: [],
-        size
+        userInput: []
     };
+}
+
+/**
+ * Replays given BoardUpdates to provide the resulting Board.
+ */
+export function replayUpdates(board: Board, updates: BoardUpdate[]): Board {
+    return reduce((b: Board, u: BoardUpdate) => assocPath([u.row, u.col], u.value, b), board, updates);
+}
+
+/**
+ * Provides an empty board of given size.
+ */
+export function emptyBoard(size: number): Board {
+    return repeat(repeat('', size), size);
 }
 
 /**
