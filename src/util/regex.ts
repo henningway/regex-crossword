@@ -2,21 +2,22 @@ import { randomElement, randomSubset, repeatFunction } from '@/util/common';
 import {
     collapse,
     expand,
+    longestPalindrome,
     matchLength,
     nextOrPrevSymbol,
     repeatedSubstringsWithoutOverlap,
     symbols,
     symbolsInOrder
 } from '@/util/string';
-import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, uniqBy, xprod } from 'ramda';
+import { all, chain, filter, flip, init, join, map, reduce, repeat, tail, test, times, uniqBy, xprod } from 'ramda';
 
 /**
  * Provides a number of characteristics describing given string.
  */
 function stringCharacteristics(value: string) {
-    const repeats = repeatedSubstringsWithoutOverlap(value);
     const allSymbols = symbols(value);
     const allSymbolsInOrder = symbolsInOrder(value);
+    const repeats = repeatedSubstringsWithoutOverlap(value);
 
     return {
         value,
@@ -24,6 +25,7 @@ function stringCharacteristics(value: string) {
         symbolCount: allSymbols.length,
         symbolsInOrder: allSymbolsInOrder,
         symbolsInOrderCount: allSymbolsInOrder.length,
+        longestPalindrome: longestPalindrome(value),
         longestRepeat: repeats[0] ?? '',
         longestRepeatCount: matchLength(repeats[0] ?? '', value),
         repeats
@@ -109,6 +111,21 @@ function regexSymbolOrder(value: string): RegExp {
 }
 
 /**
+ * Reveals the longest palindrome without giving away the involved symbols.
+ *
+ *  * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
+ */
+function regexLongestPalindrome(value: string): RegExp {
+    const len = longestPalindrome(value).length;
+    const halfLen = Math.floor(len / 2);
+    const isOdd = len % 2 === 1;
+
+    const [base, mirror] = [collapse(repeat('(.)', halfLen)), collapse(times((i) => `(\\${halfLen - i})`, halfLen))];
+
+    return new RegExp(`.*${base}${isOdd ? '.' : ''}${mirror}.*`);
+}
+
+/**
  * Produces a RegExp for given value.
  */
 export function guessRegex(value: string): RegExp {
@@ -124,12 +141,17 @@ export function guessRegex(value: string): RegExp {
         {
             condition: c.longestRepeat.length >= 2,
             handler: () => regexLongestRepeat(c.longestRepeat, c.longestRepeatCount),
-            weight: 8
+            weight: c.longestRepeat.length * 2
+        },
+        {
+            condition: c.longestPalindrome.length >= 4,
+            handler: () => regexLongestPalindrome(value),
+            weight: c.longestPalindrome.length
         },
         {
             condition: 2 <= c.symbolsInOrderCount && c.symbolsInOrderCount <= 3,
             handler: () => regexSymbolOrder(value),
-            weight: 4
+            weight: c.symbolsInOrder.length * 2
         },
         { condition: c.symbolCount >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
         { condition: true, handler: () => regexPreviousSymbol(value), weight: 1 },
@@ -149,20 +171,21 @@ if (import.meta.vitest) {
     const testF = flip(test);
 
     it('can guess a matching regex for an arbitrary string', () => {
-        const value = 'MISSISSIPPI';
+        const value = collapse(randomSubset(symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 7));
+
         const res = repeatFunction(() => guessRegex(value), 100);
 
         expect(all(testF(value), res)).toBe(true);
     });
 
     it('will not guess the same pattern every time', () => {
-        const value = 'MISSISSIPPI';
+        const value = collapse(randomSubset(symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 10));
 
         const res = repeatFunction(() => guessRegex(value), 100);
         const uniqRes = uniqBy((re: RegExp) => re.source, res);
 
         expect(all(testF(value), res)).toBe(true);
-        expect(uniqRes.length).toBeGreaterThan(25);
+        expect(uniqRes.length).toBeGreaterThan(50);
     });
 
     it('can generate a regex that reveals the longest repeating non-overlapping sequence of symbols', () => {
@@ -172,6 +195,7 @@ if (import.meta.vitest) {
 
         const re = regexLongestRepeat(repeats[0], matchLength(repeats[0], value));
 
+        expect(re.source).toBe('^.*(ISS).*\\1.*$');
         expect(test(re, value)).toBe(true);
     });
 
@@ -212,6 +236,15 @@ if (import.meta.vitest) {
 
         const re = regexSymbolOrder(value);
 
+        expect(test(re, value)).toBe(true);
+    });
+
+    it('can generate a regex that reveals the longest palindrome without revealing the involved symbols', () => {
+        const value = 'MISSISSIPPI';
+
+        const re = regexLongestPalindrome(value);
+
+        expect(re.source).toBe('.*(.)(.)(.).(\\3)(\\2)(\\1).*'); // ISSISSI - the middle I is not repeated
         expect(test(re, value)).toBe(true);
     });
 }

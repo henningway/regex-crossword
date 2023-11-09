@@ -84,6 +84,43 @@ export function prefixes(value: string): string[] {
 }
 
 /**
+ * Provides the longest palindrome in given string.
+ *
+ * https://gist.github.com/DuncanMcArdle/695c2ffb6f633d4d22275ff10ee9ab37
+ */
+export function longestPalindrome(value: string): string {
+    let longestPalLength = 0;
+    let longestPalLeft = 0;
+    let longestPalRight = 0;
+
+    const _longestPalindrome = function (leftPosition: number, rightPosition: number) {
+        // expand while there is space, and the expanded strings match
+        while (leftPosition >= 0 && rightPosition < value.length && value[leftPosition] === value[rightPosition]) {
+            leftPosition--;
+            rightPosition++;
+        }
+
+        // store the longest palindrome (if it's the longest one found so far)
+        if (rightPosition - leftPosition > longestPalLength) {
+            longestPalLeft = leftPosition + 1;
+            longestPalRight = rightPosition - 1;
+            longestPalLength = longestPalRight - longestPalLeft + 1;
+        }
+    };
+
+    // loop through the letters
+    for (let i = 0; i < value.length; i++) {
+        _longestPalindrome(i, i + 1); // longest odd palindrome
+        _longestPalindrome(i, i); // longest even palendrome
+
+        // break out to avoid unnecessary computation if a longer palindrome cannot be found
+        if ((value.length - i) * 2 < longestPalLength) break;
+    }
+
+    return value.slice(longestPalLeft, longestPalRight + 1);
+}
+
+/**
  * Provides the longest repeating substring in given string.
  */
 export function longestRepeatedSubstring(value: string): string {
@@ -167,5 +204,10 @@ if (import.meta.vitest) {
             'I',
             'S'
         ]);
+    });
+
+    it('can find the longest palindrome', () => {
+        expect(longestPalindrome('BANANA')).toBe('ANANA');
+        expect(longestPalindrome('MISSISSIPPI')).toBe('ISSISSI');
     });
 }

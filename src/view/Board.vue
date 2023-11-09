@@ -60,7 +60,7 @@
                     <!-- column regexes: relatively positioned to element in last row -->
                     <div
                         v-if="rowIndex === game.size - 1"
-                        class="absolute top-full left-full origin-top-left rotate-90 flex items-center px-2"
+                        class="absolute top-full left-full origin-top-left rotate-90 flex items-center px-2 whitespace-nowrap"
                         :class="{ 'text-green-600': checkColRegex(colIndex) }"
                         :style="{ height: CELL_PX + 'px' }"
                     >
@@ -70,7 +70,7 @@
 
                 <!-- row regex -->
                 <div
-                    class="absolute left-full flex items-center px-2"
+                    class="absolute left-full flex items-center px-2 whitespace-nowrap"
                     :class="{ 'text-green-600': checkRowRegex(rowIndex) }"
                     :style="{ height: CELL_PX + 'px' }"
                 >
