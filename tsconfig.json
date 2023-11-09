@@ -5,29 +5,19 @@
         "baseUrl": ".",
         "esModuleInterop": true,
         "jsx": "preserve",
-        "lib": [
-            "esnext",
-            "dom"
-        ],
+        "lib": ["esnext", "dom"],
         "module": "esnext",
         "moduleResolution": "node",
         "noErrorTruncation": true,
         "paths": {
-            "@/*": [
-                "src/*"
-            ]
+            "@/*": ["src/*"]
         },
         "resolveJsonModule": true,
         "sourceMap": true,
         "strict": true,
         "target": "esnext",
-        "types": [
-            "vitest/importMeta"
-        ],
+        "types": ["vitest/importMeta"],
         "useDefineForClassFields": true
     },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.vue"
-    ]
+    "include": ["src/**/*.ts", "src/**/*.vue"]
 }
