@@ -65,7 +65,7 @@
                         :class="{ 'text-green-600': checkColRegex(colIndex) }"
                         :style="{ height: CELL_PX + 'px' }"
                     >
-                        {{ trimRegex(game.regex.columns[colIndex]) }}
+                        {{ trimRegex(game.regex[Dim.COL][colIndex]) }}
                     </div>
                 </div>
 
@@ -75,7 +75,7 @@
                     :class="{ 'text-green-600': checkRowRegex(rowIndex) }"
                     :style="{ height: CELL_PX + 'px' }"
                 >
-                    {{ trimRegex(game.regex.rows[rowIndex]) }}
+                    {{ trimRegex(game.regex[Dim.ROW][rowIndex]) }}
                 </div>
             </div>
         </template>
@@ -85,7 +85,7 @@
 <script setup lang="ts">
     import { useGameStore } from '@/app/game';
     import type { Options, RegEx } from '@/type/common';
-    import { Direction } from '@/type/enum';
+    import { Dim, Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
     import { equals, includes, pipe, replace, take, test, toUpper, transpose } from 'ramda';
     import { ref } from 'vue';
@@ -102,10 +102,10 @@
 
     /* METHODS */
     const checkColRegex = (colIndex: number): boolean =>
-        test(game.regex.columns[colIndex].re, collapse(transpose(game.userBoard)[colIndex]));
+        test(game.regex.COL[colIndex].re, collapse(transpose(game.userBoard)[colIndex]));
 
     const checkRowRegex = (rowIndex: number): boolean =>
-        test(game.regex.rows[rowIndex].re, collapse(game.userBoard[rowIndex]));
+        test(game.regex.ROW[rowIndex].re, collapse(game.userBoard[rowIndex]));
 
     const focus = (row: number, col: number) => {
         inputRefs.value.find((e) => e.id === `cell-${row}-${col}`)?.focus();

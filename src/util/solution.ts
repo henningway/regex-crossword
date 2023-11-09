@@ -1,7 +1,8 @@
-import { BoardUpdate, EssentialGame, IndexedSymbol, RegEx } from '@/type/common';
-import { RegExType } from '@/type/enum';
+import { BoardUpdate, EssentialGame, IndexedSymbol } from '@/type/common';
+import { Dim, RegExType } from '@/type/enum';
+import { makeRegEx } from '@/util/regex';
 import { expand } from '@/util/string';
-import { addIndex, chain, concat, curry, filter, map, pipe, range, reverse } from 'ramda';
+import { addIndex, chain, curry, filter, map, pipe, range, reverse, uniq } from 'ramda';
 
 export function generateSolution(game: EssentialGame): BoardUpdate[] {
     return nextUpdates(game);
@@ -11,20 +12,26 @@ export function generateSolution(game: EssentialGame): BoardUpdate[] {
  * Provides the next set of BoardUpdates to solve given game.
  */
 function nextUpdates(game: EssentialGame): BoardUpdate[] {
-    return chain(solveSymbolPositions(game), range(0, game.size));
+    return [
+        ...(chain(solveSymbolPositions(game, Dim.ROW), range(0, game.size)) as BoardUpdate[]),
+        ...(chain(solveSymbolPositions(game, Dim.COL), range(0, game.size)) as BoardUpdate[])
+    ];
 }
 
 /**
  * Provides BoardUpdates to solve RegExType.SYMBOL_POSITIONS at given row index.
  */
-const solveSymbolPositions = curry((game: EssentialGame, index: number): BoardUpdate[] => {
-    const re = game.regex.rows[index];
+const solveSymbolPositions = curry((game: EssentialGame, dim: Dim, index: number): BoardUpdate[] => {
+    const re = game.regex[dim][index];
 
     if (re.type !== RegExType.SYMBOL_POSITIONS) return [];
 
-    return makeBoardUpdates(
-        [...symbolPositions(re.source, game.size), ...symbolPositions(re.source, game.size, true)],
-        index
+    return uniq(
+        makeBoardUpdates(
+            [...symbolPositions(re.source, game.size), ...symbolPositions(re.source, game.size, true)],
+            index,
+            dim
+        )
     );
 });
 
@@ -49,9 +56,13 @@ function symbolPositions(source: string, size: number, fromEnd = false): Indexed
     )(matches);
 }
 
-function makeBoardUpdates(symbols: IndexedSymbol[], index: number, row = true): BoardUpdate[] {
+function makeBoardUpdates(symbols: IndexedSymbol[], index: number, dim: Dim): BoardUpdate[] {
     return map(
-        ({ symbol, position }) => ({ col: row ? position : index, row: row ? index : position, value: symbol }),
+        ({ symbol, position }) => ({
+            col: dim === Dim.ROW ? position : index,
+            row: dim === Dim.ROW ? index : position,
+            value: symbol
+        }),
         symbols
     );
 }
@@ -72,6 +83,29 @@ if (import.meta.vitest) {
             { symbol: 'I', position: 10 },
             { symbol: 'P', position: 9 },
             { symbol: 'I', position: 7 }
+        ]);
+    });
+
+    it('can provide step by step solution instructions for positional information', () => {
+        const _makeRegex = makeRegEx(RegExType.SYMBOL_POSITIONS);
+
+        const solution = generateSolution({
+            board: [
+                ['A', 'B'],
+                ['C', 'D']
+            ],
+            regex: {
+                [Dim.ROW]: [_makeRegex('A.'), _makeRegex('.*B')],
+                [Dim.COL]: [_makeRegex('.C'), _makeRegex('D.*')]
+            },
+            size: 2
+        });
+
+        expect(solution).toStrictEqual([
+            { col: 0, row: 0, value: 'A' },
+            { col: 1, row: 1, value: 'B' },
+            { col: 0, row: 1, value: 'C' },
+            { col: 1, row: 0, value: 'D' }
         ]);
     });
 }

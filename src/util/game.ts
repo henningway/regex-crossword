@@ -17,11 +17,7 @@ export function generateGame(size: number, useGaussian = true): Game {
 
     const board: Board = times(() => times(() => randomElement(draftPool), size), size);
 
-    const essential = {
-        board,
-        regex: { rows: generateRegexes(board), columns: generateRegexes(columns(board)) },
-        size
-    };
+    const essential = { board, regex: { ROW: generateRegexes(board), COL: generateRegexes(columns(board)) }, size };
 
     return {
         ...essential,

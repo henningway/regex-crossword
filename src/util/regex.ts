@@ -51,7 +51,7 @@ function stringCharacteristics(value: string) {
     };
 }
 
-const makeRegEx = curry(<T extends RegExType>(type: T, source: string, flags = ''): RegEx<RegExType> => {
+export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, flags = ''): RegEx<RegExType> => {
     const re = new RegExp(source, flags);
 
     return { source: re.source, type, re };

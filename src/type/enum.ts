@@ -1,3 +1,8 @@
+export enum Dim {
+    ROW = 'ROW',
+    COL = 'COL'
+}
+
 export enum Direction {
     DOWN,
     LEFT,

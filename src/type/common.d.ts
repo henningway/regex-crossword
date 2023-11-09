@@ -1,4 +1,4 @@
-import { RegExType } from './enum';
+import { Dim, RegExType } from './enum';
 
 export type Board = string[][];
 
@@ -30,7 +30,7 @@ export interface Game extends EssentialGame {
  */
 export interface EssentialGame {
     board: Board;
-    regex: { rows: RegEx[]; columns: RegEx[] };
+    regex: { [Dim.ROW]: RegEx[]; [Dim.COL]: RegEx[] };
     size: number;
 }
 
