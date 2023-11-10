@@ -19,13 +19,15 @@ export function generateGame(size: number, useGaussian = true): Game {
 
     const essential = { board, regex: { ROW: generateRegexes(board), COL: generateRegexes(columns(board)) }, size };
 
+    const solution = generateSolution(essential);
+
     return {
         ...essential,
         allSymbols: alphabet,
         draftedSymbols: availableSymbols, // the symbols that were actually used
         entropy: entropy(collapse(map(collapse, board))),
         solution: generateSolution(essential),
-        solutionIndex: 0,
+        solutionIndex: solution.length,
         replayIndex: 0,
         unusedSymbols: difference(availableSymbols, draftPool),
         userInput: []
