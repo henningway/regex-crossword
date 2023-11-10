@@ -58,13 +58,11 @@ export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, fl
     return { source: re.source, type, re };
 });
 
-export const makeRegExWithSegments = curry(
-    <T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
-        const re = new RegExp(collapse(segments), flags);
+export const makeSegRegEx = curry(<T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
+    const re = new RegExp('^' + collapse(segments) + '$', flags);
 
-        return { segments, source: re.source, type, re };
-    }
-);
+    return { segments, source: re.source, type, re };
+});
 
 /**
  * Revelas the longest repeating non-overlapping sequence of symbols. Uses capturing to make the regex harder to read.
@@ -107,7 +105,7 @@ function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> 
         segments
     );
 
-    return makeRegExWithSegments(RegExType.SYMBOL_POSITIONS, segments);
+    return makeSegRegEx(RegExType.SYMBOL_POSITIONS, segments);
 }
 
 /**
@@ -152,7 +150,7 @@ function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
 function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
     const segments = ['^', ...map((s) => s + '+', symbolsInOrder(value)), '$'];
 
-    return makeRegExWithSegments(RegExType.SYMBOL_ORDER, segments);
+    return makeSegRegEx(RegExType.SYMBOL_ORDER, segments);
 }
 
 /**

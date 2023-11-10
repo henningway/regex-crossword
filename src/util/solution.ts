@@ -1,8 +1,7 @@
-import { BoardUpdate, EssentialGame, ExtendedChar, IndexedSymbol } from '@/type/common';
+import { BoardUpdate, EssentialGame, ExtendedChar, IndexedSymbol, RegEx } from '@/type/common';
 import { Dim, RegExType } from '@/type/enum';
-import { makeRegEx } from '@/util/regex';
-import { expand } from '@/util/string';
-import { addIndex, chain, curry, filter, map, pipe, range, reverse, uniq } from 'ramda';
+import { makeSegRegEx } from '@/util/regex';
+import { addIndex, chain, curry, filter, map, pipe, range, reverse, takeWhile, test, uniq } from 'ramda';
 
 export function generateSolution(game: EssentialGame): BoardUpdate[] {
     return nextUpdates(game);
@@ -27,31 +26,21 @@ const solveSymbolPositions = curry((game: EssentialGame, dim: Dim, index: number
     if (re.type !== RegExType.SYMBOL_POSITIONS) return [];
 
     return uniq(
-        makeBoardUpdates(
-            [...symbolPositions(re.source, game.size), ...symbolPositions(re.source, game.size, true)],
-            index,
-            dim
-        )
+        makeBoardUpdates([...symbolPositions(re, game.size), ...symbolPositions(re, game.size, true)], index, dim)
     );
 });
 
 /**
  * Provides exact index and value of symbols at the start of a regex of RegExType.SYMBOL_POSITIONS.
  */
-function symbolPositions(source: string, size: number, fromEnd = false): IndexedSymbol[] {
-    const makeEntry = (s: string, outerIndex: number, innerIndex: number) => ({
-        symbol: s,
-        position: fromEnd ? size - 1 - (outerIndex + innerIndex) : outerIndex + innerIndex
-    });
+function symbolPositions(re: RegEx, size: number, fromEnd = false): IndexedSymbol[] {
+    const makeEntries = (matches: string[]): IndexedSymbol[] =>
+        mapI((s, i) => ({ symbol: s, position: fromEnd ? size - 1 - i : i }), matches);
 
-    const makeEntries = (match: Required<RegExpMatchArray>): IndexedSymbol[] =>
-        //@ts-ignore
-        mapI((s, i) => makeEntry(s, match.index, i), expand(match[0]) as string[]);
-
-    const matches = [...(fromEnd ? reverse(source) : source).matchAll(/^[^\*]+/g)] as Required<RegExpMatchArray>[];
+    const matches: string[] = takeWhile(test(/^[A-Z\.]$/), fromEnd ? reverse(re.segments!) : re.segments!);
 
     return pipe(
-        chain(makeEntries),
+        makeEntries,
         filter((entry: IndexedSymbol<ExtendedChar>) => entry.symbol !== '.')
     )(matches);
 }
@@ -72,14 +61,16 @@ const mapI = addIndex(map);
 if (import.meta.vitest) {
     const { it, expect } = import.meta.vitest;
 
+    const reMississippi = makeSegRegEx(RegExType.SYMBOL_POSITIONS, ['M', 'I', '.', 'S', '.*', 'I', '.', 'P', 'I']);
+
     it('can provide index and value of symbols at the start and end of a regex matching a string of known length', () => {
-        expect(symbolPositions('MI.S.*I.PI', 11)).toStrictEqual([
+        expect(symbolPositions(reMississippi, 11)).toStrictEqual([
             { symbol: 'M', position: 0 },
             { symbol: 'I', position: 1 },
             { symbol: 'S', position: 3 }
         ]);
 
-        expect(symbolPositions('MI.S.*I.PI', 11, true)).toStrictEqual([
+        expect(symbolPositions(reMississippi, 11, true)).toStrictEqual([
             { symbol: 'I', position: 10 },
             { symbol: 'P', position: 9 },
             { symbol: 'I', position: 7 }
@@ -87,7 +78,7 @@ if (import.meta.vitest) {
     });
 
     it('can provide step by step solution instructions for positional information', () => {
-        const _makeRegex = makeRegEx(RegExType.SYMBOL_POSITIONS);
+        const _makeRegex = makeSegRegEx(RegExType.SYMBOL_POSITIONS);
 
         const solution = generateSolution({
             board: [
@@ -95,8 +86,8 @@ if (import.meta.vitest) {
                 ['C', 'D']
             ],
             regex: {
-                [Dim.ROW]: [_makeRegex('A.'), _makeRegex('.*B')],
-                [Dim.COL]: [_makeRegex('.C'), _makeRegex('D.*')]
+                [Dim.ROW]: [_makeRegex(['A', '.']), _makeRegex(['.*', 'B'])],
+                [Dim.COL]: [_makeRegex(['.', 'C']), _makeRegex(['D', '.*'])]
             },
             size: 2
         });
