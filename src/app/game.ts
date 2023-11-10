@@ -1,4 +1,4 @@
-import { Board, BoardUpdate, Game } from '@/type/common';
+import { BoardUpdate, Game, NullableBoard } from '@/type/common';
 import { emptyBoard, generateGame, replayUpdates } from '@/util/game';
 import { defineStore } from 'pinia';
 import { take } from 'ramda';
@@ -6,9 +6,10 @@ import { take } from 'ramda';
 export const useGameStore = defineStore('game', {
     state: (): Game => generateGame(7),
     getters: {
-        solutionBoard: (state): Board =>
+        solutionBoard: (state): NullableBoard =>
             replayUpdates(emptyBoard(state.size), take(state.solutionIndex, state.solution)),
-        userBoard: (state): Board => replayUpdates(emptyBoard(state.size), take(state.replayIndex, state.userInput))
+        userBoard: (state): NullableBoard =>
+            replayUpdates(emptyBoard(state.size), take(state.replayIndex, state.userInput))
     },
     actions: {
         addUpdate(update: BoardUpdate) {

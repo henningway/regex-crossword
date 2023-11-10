@@ -59,7 +59,7 @@ export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, fl
 });
 
 export const makeSegRegEx = curry(<T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
-    const re = new RegExp(collapse(segments), flags);
+    const re = new RegExp('^' + collapse(segments) + '$', flags);
 
     return { segments, source: re.source, type, re };
 });

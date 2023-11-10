@@ -1,10 +1,11 @@
-import type { Board, BoardUpdate, Char, Game, RegEx } from '@/type/common';
+import type { Board, BoardUpdate, Char, Game, NullableBoard, MaybeEmptyChar, RegEx } from '@/type/common';
 import { randomElement, randomSubset } from '@/util/common';
 import { randomGaussian } from '@/util/math';
 import { guessRegex } from '@/util/regex';
 import { collapse, entropy, symbols } from '@/util/string';
 import { assocPath, chain, difference, map, pipe, reduce, repeat, times, transpose } from 'ramda';
 import { generateSolution } from '@/util/solution';
+import { Dim } from '@/type/enum';
 
 const alphabet: Char[] = symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
@@ -37,14 +38,32 @@ export function generateGame(size: number, useGaussian = true): Game {
 /**
  * Replays given BoardUpdates to provide the resulting Board.
  */
-export function replayUpdates(board: Board, updates: BoardUpdate[]): Board {
-    return reduce((b: Board, u: BoardUpdate) => assocPath([u.row, u.col], u.value, b), board, updates);
+export function replayUpdates(board: NullableBoard, updates: BoardUpdate[]): NullableBoard | Board {
+    return reduce(
+        (b: NullableBoard, u: BoardUpdate): NullableBoard => assocPath([u.row, u.col], u.value, b),
+        board,
+        updates
+    );
+}
+
+/**
+ * Replays the BoardUpdates in given solution fully.
+ */
+export function fullBoard(size: number, solution: BoardUpdate[]): NullableBoard | Board {
+    return replayUpdates(emptyBoard(size), solution);
+}
+
+/**
+ * Provides a word of given board specified by given coordinates.
+ */
+export function getWord(board: NullableBoard, dim: Dim, index: number): (Char | null)[] {
+    return (dim === Dim.ROW ? board : columns(board))[index];
 }
 
 /**
  * Provides an empty board of given size.
  */
-export function emptyBoard(size: number): Board {
+export function emptyBoard(size: number): NullableBoard {
     return repeat(repeat(null, size), size);
 }
 
@@ -62,8 +81,8 @@ function gaussianPool(availableSymbols: Char[], mean: number, stdev: number, siz
     return chain((s) => repeat(s.symbol, Math.max(1, s.weight)), randomSymbolDistribution);
 }
 
-function columns(board: Board) {
-    return transpose(board);
+function columns<T extends Board | NullableBoard>(board: T): T {
+    return transpose(board) as T;
 }
 
 function generateRegexes(board: Board): RegEx[] {

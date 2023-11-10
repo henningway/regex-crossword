@@ -1,6 +1,6 @@
 import { Dim, RegExType } from '@/type/enum';
 
-export type Board = (Char | null)[][];
+export type Board = Char[][];
 
 // prettier-ignore
 export type Char = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z';
@@ -39,10 +39,14 @@ export interface EssentialGame {
     size: number;
 }
 
-interface IndexedSymbol<C extends Char | ExtendedChar = Char> {
+interface IndexedSymbol<C extends Char | ExtendedChar | MaybeEmptyChar = Char> {
     symbol: C;
     position: number;
 }
+
+export type MaybeEmptyChar = Char | '' | null;
+
+export type NullableBoard = (Char | null)[][];
 
 /**
  * Describes options that are used for presentation and generation of games.
