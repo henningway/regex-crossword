@@ -1,3 +1,7 @@
 coverage/
 node_modules/
+<<<<<<< HEAD
 .vscode/
+=======
+.vscode/
+>>>>>>> 01c8636 (further simplifications)

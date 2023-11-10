@@ -1,7 +1,7 @@
 import { BoardUpdate, EssentialGame, ExtendedChar, IndexedSymbol, RegEx } from '@/type/common';
 import { Dim, RegExType } from '@/type/enum';
 import { makeSegRegEx } from '@/util/regex';
-import { addIndex, chain, curry, filter, map, pipe, range, reverse, takeWhile, test, uniq } from 'ramda';
+import { addIndex, chain, curry, filter, map, pipe, prop, range, reverse, sortBy, takeWhile, test, uniq } from 'ramda';
 
 export function generateSolution(game: EssentialGame): BoardUpdate[] {
     return nextUpdates(game);
@@ -25,24 +25,26 @@ const solveSymbolPositions = curry((game: EssentialGame, dim: Dim, index: number
 
     if (re.type !== RegExType.SYMBOL_POSITIONS) return [];
 
-    return uniq(
-        makeBoardUpdates([...symbolPositions(re, game.size), ...symbolPositions(re, game.size, true)], index, dim)
-    );
+    return uniq(makeBoardUpdates(getSymbolPositions(re, game.size), index, dim));
 });
 
 /**
  * Provides exact index and value of symbols at the start of a regex of RegExType.SYMBOL_POSITIONS.
  */
-function symbolPositions(re: RegEx, size: number, fromEnd = false): IndexedSymbol[] {
-    const makeEntries = (matches: string[]): IndexedSymbol[] =>
+function getSymbolPositions(re: RegEx, size: number): IndexedSymbol[] {
+    const makeEntries = (matches: string[], fromEnd: boolean): IndexedSymbol<ExtendedChar>[] =>
         mapI((s, i) => ({ symbol: s, position: fromEnd ? size - 1 - i : i }), matches);
 
-    const matches: string[] = takeWhile(test(/^[A-Z\.]$/), fromEnd ? reverse(re.segments!) : re.segments!);
+    const takeSymbols = takeWhile(test(/^[A-Z\.]$/));
 
-    return pipe(
-        makeEntries,
-        filter((entry: IndexedSymbol<ExtendedChar>) => entry.symbol !== '.')
-    )(matches);
+    const entriesLeft = makeEntries(takeSymbols(re.segments!), false);
+    const entriesRight = makeEntries(takeSymbols(reverse(re.segments!)), true);
+
+    const filterSymbols = filter((entry: IndexedSymbol<ExtendedChar>) => entry.symbol !== '.') as (
+        list: IndexedSymbol<ExtendedChar>[]
+    ) => IndexedSymbol[];
+
+    return pipe(sortBy(prop('position')), filterSymbols)([...entriesLeft, ...entriesRight]);
 }
 
 function makeBoardUpdates(symbols: IndexedSymbol[], index: number, dim: Dim): BoardUpdate[] {
@@ -64,16 +66,13 @@ if (import.meta.vitest) {
     const reMississippi = makeSegRegEx(RegExType.SYMBOL_POSITIONS, ['M', 'I', '.', 'S', '.*', 'I', '.', 'P', 'I']);
 
     it('can provide index and value of symbols at the start and end of a regex matching a string of known length', () => {
-        expect(symbolPositions(reMississippi, 11)).toStrictEqual([
+        expect(getSymbolPositions(reMississippi, 11)).toStrictEqual([
             { symbol: 'M', position: 0 },
             { symbol: 'I', position: 1 },
-            { symbol: 'S', position: 3 }
-        ]);
-
-        expect(symbolPositions(reMississippi, 11, true)).toStrictEqual([
-            { symbol: 'I', position: 10 },
+            { symbol: 'S', position: 3 },
+            { symbol: 'I', position: 7 },
             { symbol: 'P', position: 9 },
-            { symbol: 'I', position: 7 }
+            { symbol: 'I', position: 10 }
         ]);
     });
 
