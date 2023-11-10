@@ -56,6 +56,7 @@ export interface Options {
 
 export interface RegEx<T extends RegExType = RegExType> {
     re: RegExp;
+    segments?: string[];
     source: string;
     type: T;
 }

@@ -58,6 +58,14 @@ export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, fl
     return { source: re.source, type, re };
 });
 
+export const makeRegExWithSegments = curry(
+    <T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
+        const re = new RegExp(collapse(segments), flags);
+
+        return { segments, source: re.source, type, re };
+    }
+);
+
 /**
  * Revelas the longest repeating non-overlapping sequence of symbols. Uses capturing to make the regex harder to read.
  *
@@ -90,16 +98,16 @@ function regexRandomSubsetOfSymbols(symbols: Char[]): RegEx<RegExType.SYMBOL_SUB
 function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> {
     const threshold = 0.25;
 
-    const pattern = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
+    let segments: string[] = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
 
-    const patternReduced: string[] = reduce(
+    segments = reduce(
         (acc: string[], val: string) =>
             (acc.at(-1) === '.' || acc.at(-1) === '.*') && val === '.' ? [...init(acc), '.*'] : [...acc, val],
         [],
-        pattern
+        segments
     );
 
-    return makeRegEx(RegExType.SYMBOL_POSITIONS, `${collapse(patternReduced)}`);
+    return makeRegExWithSegments(RegExType.SYMBOL_POSITIONS, segments);
 }
 
 /**
@@ -142,7 +150,9 @@ function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
  * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
  */
 function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
-    return makeRegEx(RegExType.SYMBOL_ORDER, `^${join('+', symbolsInOrder(value))}+$`);
+    const segments = ['^', ...map((s) => s + '+', symbolsInOrder(value)), '$'];
+
+    return makeRegExWithSegments(RegExType.SYMBOL_ORDER, segments);
 }
 
 /**
