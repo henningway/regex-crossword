@@ -3,7 +3,8 @@ import { Dim, RegExType } from '@/type/enum';
 import { makeSegRegEx } from '@/util/regex';
 import {
     addIndex,
-    chain,
+    apply,
+    concat,
     curry,
     filter,
     head,
@@ -12,6 +13,7 @@ import {
     pipe,
     prop,
     range,
+    reduce,
     reverse,
     sortBy,
     takeWhile,
@@ -19,47 +21,58 @@ import {
     uniq
 } from 'ramda';
 
-type Solver = (game: EssentialGame, dim: Dim) => (index: number) => BoardUpdate[];
-
-export function generateSolution(game: EssentialGame): BoardUpdate[] {
-    return nextUpdates(game);
-}
+type Solver = (game: EssentialGame, dim: Dim, index: number) => ComposableSolver;
+type ComposableSolver = (solution: BoardUpdate[]) => BoardUpdate[];
 
 /**
- * Provides the next set of BoardUpdates to solve given game.
+ * Provides a solution by chaining solvers.
  */
-function nextUpdates(game: EssentialGame): BoardUpdate[] {
-    const runSolver = (solver: Solver, dim: Dim): BoardUpdate[] => chain(solver(game, dim), range(0, game.size));
+export function generateSolution(game: EssentialGame): BoardUpdate[] {
+    const makeSolvers = (solver: Solver, dim: Dim): ComposableSolver[] =>
+        map((index) => solver(game, dim, index), range(0, game.size));
 
-    return uniq([
-        ...runSolver(solveSymbolPositions, Dim.ROW),
-        ...runSolver(solveSymbolPositions, Dim.COL),
-        ...runSolver(solveSymbolOrder, Dim.ROW),
-        ...runSolver(solveSymbolOrder, Dim.COL)
-    ]);
+    const solvers = concatAll([
+        makeSolvers(solveSymbolPositions, Dim.ROW),
+        makeSolvers(solveSymbolPositions, Dim.COL),
+        makeSolvers(solveSymbolOrder, Dim.ROW),
+        makeSolvers(solveSymbolOrder, Dim.COL)
+    ]) as ComposableSolver[];
+
+    // @ts-ignore
+    return uniq(apply(pipe, solvers)([]));
 }
 
 /**
  * Provides BoardUpdates to solve RegExType.SYMBOL_POSITIONS at given row index.
  */
-const solveSymbolPositions = curry((game: EssentialGame, dim: Dim, index: number): BoardUpdate[] => {
-    const re = game.regex[dim][index];
+const solveSymbolPositions = curry(
+    (game: EssentialGame, dim: Dim, index: number, solution: BoardUpdate[]): BoardUpdate[] => {
+        const re = game.regex[dim][index];
 
-    if (re.type !== RegExType.SYMBOL_POSITIONS) return [];
+        const newUpdates =
+            re.type !== RegExType.SYMBOL_POSITIONS
+                ? []
+                : uniq(makeBoardUpdates(solveReSymbolPositions(re, game.size), index, dim));
 
-    return uniq(makeBoardUpdates(solveReSymbolPositions(re, game.size), index, dim));
-});
+        return [...solution, ...newUpdates];
+    }
+);
 
 /**
  * Provides BoardUpdates to solve RegExType.SYMBOL_ORDER at given row index.
  */
-const solveSymbolOrder = curry((game: EssentialGame, dim: Dim, index: number): BoardUpdate[] => {
-    const re = game.regex[dim][index];
+const solveSymbolOrder = curry(
+    (game: EssentialGame, dim: Dim, index: number, solution: BoardUpdate[]): BoardUpdate[] => {
+        const re = game.regex[dim][index];
 
-    if (re.type !== RegExType.SYMBOL_ORDER) return [];
+        const newUpdates =
+            re.type !== RegExType.SYMBOL_ORDER
+                ? []
+                : uniq(makeBoardUpdates(solveReSymbolOrder(re, game.size), index, dim));
 
-    return uniq(makeBoardUpdates(solveReSymbolOrder(re, game.size), index, dim));
-});
+        return [...solution, ...newUpdates];
+    }
+);
 
 /**
  * Provides exact index and value of symbols at the start and end of a regex of RegExType.SYMBOL_POSITIONS.
@@ -108,6 +121,7 @@ function makeBoardUpdates(symbols: IndexedSymbol[], index: number, dim: Dim): Bo
 }
 
 const mapI = addIndex(map);
+const concatAll = reduce(concat, []);
 
 if (import.meta.vitest) {
     const { it, expect } = import.meta.vitest;
