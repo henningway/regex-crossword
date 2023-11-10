@@ -19,6 +19,8 @@ import {
     uniq
 } from 'ramda';
 
+type Solver = (game: EssentialGame, dim: Dim) => (index: number) => BoardUpdate[];
+
 export function generateSolution(game: EssentialGame): BoardUpdate[] {
     return nextUpdates(game);
 }
@@ -27,11 +29,13 @@ export function generateSolution(game: EssentialGame): BoardUpdate[] {
  * Provides the next set of BoardUpdates to solve given game.
  */
 function nextUpdates(game: EssentialGame): BoardUpdate[] {
+    const runSolver = (solver: Solver, dim: Dim): BoardUpdate[] => chain(solver(game, dim), range(0, game.size));
+
     return uniq([
-        ...(chain(solveSymbolPositions(game, Dim.ROW), range(0, game.size)) as BoardUpdate[]),
-        ...(chain(solveSymbolPositions(game, Dim.COL), range(0, game.size)) as BoardUpdate[]),
-        ...(chain(solveSymbolOrder(game, Dim.ROW), range(0, game.size)) as BoardUpdate[]),
-        ...(chain(solveSymbolOrder(game, Dim.COL), range(0, game.size)) as BoardUpdate[])
+        ...runSolver(solveSymbolPositions, Dim.ROW),
+        ...runSolver(solveSymbolPositions, Dim.COL),
+        ...runSolver(solveSymbolOrder, Dim.ROW),
+        ...runSolver(solveSymbolOrder, Dim.COL)
     ]);
 }
 
