@@ -31,7 +31,7 @@
                 >
                     <!-- solution -->
                     <span
-                        v-if="options.solution && game.userBoard[rowIndex][colIndex] === ''"
+                        v-if="options.solution && game.userBoard[rowIndex][colIndex] === null"
                         class="transition-transform text-gray-400 dark:text-gray-700 absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit select-none pointer-events-none bg-transparent"
                         :class="{ 'rotate-45': options.rotate }"
                     >
@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
     import { useGameStore } from '@/app/game';
-    import type { Options, RegEx } from '@/type/common';
+    import type { Char, Options, RegEx } from '@/type/common';
     import { Dim, Direction } from '@/type/enum';
     import { collapse } from '@/util/string';
     import { equals, includes, pipe, replace, take, test, toUpper, transpose } from 'ramda';
@@ -116,17 +116,17 @@
 
         if (includes(toUpper(e.key), game.allSymbols)) {
             e.stopPropagation();
-            update(toUpper(e.key));
+            update(toUpper(e.key) as Char);
             navigate(Direction.RIGHT);
         }
 
         if (e.key === 'Backspace') {
-            update('');
+            update(null);
             navigate(Direction.LEFT);
         }
 
         if (e.key === 'Delete') {
-            update('');
+            update(null);
             navigate(Direction.RIGHT);
         }
     };
@@ -159,7 +159,7 @@
         // return pipe(replace(/^\^?(\.\*)?/, ''), replace(/(\.\*)?\$?$/, ''))(regex.source); // replaces .* at start and end as well
     };
 
-    const update = (value: string) => {
+    const update = (value: Char | null) => {
         if (activeCell.value === null) return;
         game.addUpdate({ row: activeCell.value.row, col: activeCell.value.col, value });
     };

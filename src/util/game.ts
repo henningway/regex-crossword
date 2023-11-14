@@ -1,4 +1,4 @@
-import type { Board, BoardUpdate, Game, RegEx } from '@/type/common';
+import type { Board, BoardUpdate, Char, Game, RegEx } from '@/type/common';
 import { randomElement, randomSubset } from '@/util/common';
 import { randomGaussian } from '@/util/math';
 import { guessRegex } from '@/util/regex';
@@ -6,12 +6,12 @@ import { collapse, entropy, symbols } from '@/util/string';
 import { assocPath, chain, difference, map, pipe, reduce, repeat, times, transpose } from 'ramda';
 import { generateSolution } from '@/util/solution';
 
-const alphabet = symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+const alphabet: Char[] = symbols('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
 export function generateGame(size: number, useGaussian = true): Game {
-    const availableSymbols: string[] = randomSubset(alphabet, 5 + Math.floor(size / 2));
+    const availableSymbols: Char[] = randomSubset(alphabet, 5 + Math.floor(size / 2));
 
-    const draftPool: string[] = useGaussian
+    const draftPool: Char[] = useGaussian
         ? gaussianPool(availableSymbols, (size * size) / availableSymbols.length, 8, size)
         : availableSymbols;
 
@@ -45,16 +45,16 @@ export function replayUpdates(board: Board, updates: BoardUpdate[]): Board {
  * Provides an empty board of given size.
  */
 export function emptyBoard(size: number): Board {
-    return repeat(repeat('', size), size);
+    return repeat(repeat(null, size), size);
 }
 
 /**
  * Provides a list of symbols with some of them repeated using a normal distribution.
  */
-function gaussianPool(availableSymbols: string[], mean: number, stdev: number, size: number): string[] {
+function gaussianPool(availableSymbols: Char[], mean: number, stdev: number, size: number): Char[] {
     // the weights will add up to ~size², note that weights can be negative
-    const randomSymbolDistribution: { symbol: string; weight: number }[] = map(
-        (symbol: string) => ({ symbol, weight: Math.round(randomGaussian(mean, stdev)) }),
+    const randomSymbolDistribution: { symbol: Char; weight: number }[] = map(
+        (symbol: Char) => ({ symbol, weight: Math.round(randomGaussian(mean, stdev)) }),
         availableSymbols
     );
 

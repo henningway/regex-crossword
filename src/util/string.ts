@@ -1,15 +1,13 @@
-import { IndexedSymbol } from '@/type/common';
+import { Char, ExtendedChar, IndexedSymbol } from '@/type/common';
 import { SuffixTree } from '@/util/suffix-tree';
 import {
     add,
     addIndex,
     chain,
     filter,
-    head,
     join,
     last,
     map,
-    match,
     pipe,
     pluck,
     prop,
@@ -17,14 +15,13 @@ import {
     reverse,
     sortBy,
     split,
-    subtract,
     times,
     uniq,
     values
 } from 'ramda';
 
 export const collapse = join('');
-export const expand = split('');
+export const expand = split('') as (str: string) => Char[];
 
 /**
  * Calculates the Shannon entropy for given string.
@@ -54,11 +51,11 @@ export function matchLength(substring: string, value: string): number {
     return matches(substring, value).length;
 }
 
-export function nextOrPrevSymbols(anchor: string, value: string, next: boolean): string[] {
+export function nextOrPrevSymbols(anchor: Char, value: string, next: boolean): ExtendedChar[] {
     const anchors: IndexedSymbol[] = filter(
         (e) => e.symbol === anchor,
         // @ts-ignore
-        mapI((symbol: string, position: number) => ({ symbol, position }), expand(value)) as IndexedSymbol[]
+        mapI((symbol: ExtendedChar, position: number) => ({ symbol, position }), expand(value)) as IndexedSymbol[]
     );
 
     const relativeIndexes: number[] = filter(
@@ -66,14 +63,14 @@ export function nextOrPrevSymbols(anchor: string, value: string, next: boolean):
         map(add(next ? 1 : -1), pluck('position', anchors))
     );
 
-    return uniq(map((index) => value[index], relativeIndexes));
+    return uniq(map((index) => value[index], relativeIndexes) as ExtendedChar[]);
 }
 
 /**
  * Provides all unique symbols in given string.
  */
-export function symbols(value: string): string[] {
-    return uniq(expand(value));
+export function symbols(value: string): Char[] {
+    return uniq(expand(value) as Char[]);
 }
 
 /**

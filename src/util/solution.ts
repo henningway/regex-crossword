@@ -1,4 +1,4 @@
-import { BoardUpdate, EssentialGame, IndexedSymbol } from '@/type/common';
+import { BoardUpdate, EssentialGame, ExtendedChar, IndexedSymbol } from '@/type/common';
 import { Dim, RegExType } from '@/type/enum';
 import { makeRegEx } from '@/util/regex';
 import { expand } from '@/util/string';
@@ -52,7 +52,7 @@ function symbolPositions(source: string, size: number, fromEnd = false): Indexed
 
     return pipe(
         chain(makeEntries),
-        filter((entry: IndexedSymbol) => entry.symbol !== '.')
+        filter((entry: IndexedSymbol<ExtendedChar>) => entry.symbol !== '.')
     )(matches);
 }
 

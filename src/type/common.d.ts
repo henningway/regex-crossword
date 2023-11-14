@@ -1,6 +1,9 @@
-import { Dim, RegExType } from './enum';
+import { Dim, RegExType } from '@/type/enum';
 
-export type Board = string[][];
+export type Board = (Char | null)[][];
+
+// prettier-ignore
+export type Char = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z';
 
 /**
  * Describes an update to the user board.
@@ -8,20 +11,22 @@ export type Board = string[][];
 export interface BoardUpdate {
     row: number;
     col: number;
-    value: string;
+    value: Char | null;
 }
+
+export type ExtendedChar = Char | '.';
 
 /**
  * Describes one game of RegEx crossword including some meta information and user input.
  */
 export interface Game extends EssentialGame {
-    allSymbols: string[];
-    draftedSymbols: string[];
+    allSymbols: Char[];
+    draftedSymbols: Char[];
     entropy: number;
     replayIndex: number;
     solution: BoardUpdate[];
     solutionIndex: number;
-    unusedSymbols: string[];
+    unusedSymbols: Char[];
     userInput: BoardUpdate[];
 }
 
@@ -34,8 +39,8 @@ export interface EssentialGame {
     size: number;
 }
 
-interface IndexedSymbol {
-    symbol: string;
+interface IndexedSymbol<C extends Char | ExtendedChar = Char> {
+    symbol: C;
     position: number;
 }
 

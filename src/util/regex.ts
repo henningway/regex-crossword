@@ -1,4 +1,4 @@
-import { RegEx } from '@/type/common';
+import { Char, ExtendedChar, RegEx } from '@/type/common';
 import { RegExType } from '@/type/enum';
 import { randomElement, randomSubset, repeatFunction } from '@/util/common';
 import {
@@ -72,7 +72,7 @@ function regexLongestRepeat(value: string, count: number): RegEx<RegExType.LONGE
  *
  * Ex.: MISSISSIPPI => /^.*[SMI]*.*$/
  */
-function regexRandomSubsetOfSymbols(symbols: string[]): RegEx<RegExType.SYMBOL_SUBSET> {
+function regexRandomSubsetOfSymbols(symbols: Char[]): RegEx<RegExType.SYMBOL_SUBSET> {
     const subset = randomSubset(symbols);
     const make = makeRegEx(RegExType.SYMBOL_SUBSET);
 
@@ -90,7 +90,7 @@ function regexRandomSubsetOfSymbols(symbols: string[]): RegEx<RegExType.SYMBOL_S
 function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> {
     const threshold = 0.25;
 
-    const pattern: string[] = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
+    const pattern = map((char) => (Math.random() > threshold ? '.' : char), expand(value)); // most likely contains stretches of "..."
 
     const patternReduced: string[] = reduce(
         (acc: string[], val: string) =>
