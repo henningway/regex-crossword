@@ -32,27 +32,28 @@ type ComposableSolver = (solution: BoardUpdate[]) => BoardUpdate[];
  * Provides a solution by chaining solvers.
  */
 export function generateSolution(game: EssentialGame): BoardUpdate[] {
+    const DEBUG = false;
+
     const makeSolvers = (solver: Solver, dim: Dim): ComposableSolver[] =>
         map((i) => solver(game, dim, i), range(0, game.size));
 
     const withLogging = (solver: ComposableSolver) =>
         pipe(
-            tap((x) => console.log('IN', x)),
             solver,
-            tap((x) => console.log('OUT', x))
+            tap((x) => console.debug('OUT', x))
         );
 
-    const solvers = concatAll([
+    let solvers = concatAll([
         makeSolvers(solveSymbolPositions, Dim.ROW),
         makeSolvers(solveSymbolPositions, Dim.COL),
         makeSolvers(solveSymbolOrder, Dim.ROW),
         makeSolvers(solveSymbolOrder, Dim.COL)
     ]) as ComposableSolver[];
 
-    const loggingSolvers = map(withLogging, solvers);
+    if (DEBUG) solvers = map(withLogging, solvers);
 
     // @ts-ignore
-    return uniq(apply(pipe, loggingSolvers)([]));
+    return uniq(apply(pipe, solvers)([]));
 }
 
 /**
@@ -79,8 +80,6 @@ const solveSymbolOrder = curry(
         const re = game.regex[dim][index];
 
         const makeUpdates = () => {
-            console.log('fullBoard', fullBoard(game.size, solution));
-
             const word = getWord(fullBoard(game.size, solution), dim, index) as MaybeEmptyChar[]; // known symbols at given coordinates
             return uniq(makeBoardUpdates(solveReSymbolOrder(re, word), index, dim));
         };
