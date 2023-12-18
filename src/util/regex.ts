@@ -197,8 +197,8 @@ export function guessRegex(value: string): RegEx {
             weight: c.symbolsInOrder.length * 2
         },
         { condition: c.symbolCount >= 2, handler: () => regexRandomSubsetOfSymbols(c.symbols), weight: 2 },
-        { condition: true, handler: () => regexPreviousSymbol(value), weight: 1 },
-        { condition: true, handler: () => regexNextSymbol(value), weight: 1 },
+        { condition: c.symbolCount >= 2, handler: () => regexPreviousSymbol(value), weight: 1 },
+        { condition: c.symbolCount >= 2, handler: () => regexNextSymbol(value), weight: 1 },
         { condition: true, handler: () => regexSymbolPositions(value), weight: 2 }
     ];
 
