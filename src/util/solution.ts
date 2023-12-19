@@ -1,7 +1,7 @@
 import { BoardUpdate, Char, EssentialGame, ExtendedChar, IndexedSymbol, MaybeEmptyChar, RegEx } from '@/type/common';
 import { Dim, RegExType } from '@/type/enum';
 import { fullBoard, getWord } from '@/util/game';
-import { makeSegRegEx } from '@/util/regex';
+import { makeMetaRegEx, makeSegRegEx } from '@/util/regex';
 import {
     addIndex,
     apply,
@@ -31,7 +31,7 @@ type ComposableSolver = (solution: BoardUpdate[]) => BoardUpdate[];
 /**
  * Provides a solution by chaining solvers.
  */
-export function generateSolution(game: EssentialGame): BoardUpdate[] {
+export function generateSolution(game: EssentialGame, partialSolution: BoardUpdate[] = []): BoardUpdate[] {
     const DEBUG = false;
 
     const makeSolvers = (solver: Solver, dim: Dim): ComposableSolver[] =>
@@ -47,13 +47,17 @@ export function generateSolution(game: EssentialGame): BoardUpdate[] {
         makeSolvers(solveSymbolPositions, Dim.ROW),
         makeSolvers(solveSymbolPositions, Dim.COL),
         makeSolvers(solveSymbolOrder, Dim.ROW),
-        makeSolvers(solveSymbolOrder, Dim.COL)
+        makeSolvers(solveSymbolOrder, Dim.COL),
+        makeSolvers(solveNextSymbols, Dim.ROW),
+        makeSolvers(solveNextSymbols, Dim.COL),
+        makeSolvers(solvePreviousSymbols, Dim.ROW),
+        makeSolvers(solvePreviousSymbols, Dim.COL)
     ]) as ComposableSolver[];
 
     if (DEBUG) solvers = map(withLogging, solvers);
 
     // @ts-ignore
-    return uniq(apply(pipe, solvers)([]));
+    return uniq(apply(pipe, solvers)(partialSolution));
 }
 
 /**
@@ -64,9 +68,9 @@ const solveSymbolPositions = curry(
         const re = game.regex[dim][index];
 
         const newUpdates =
-            re.type !== RegExType.SYMBOL_POSITIONS
-                ? []
-                : uniq(makeBoardUpdates(solveReSymbolPositions(re, game.size), index, dim));
+            re?.type === RegExType.SYMBOL_POSITIONS
+                ? uniq(makeBoardUpdates(solveReSymbolPositions(re, game.size), index, dim))
+                : [];
 
         return [...solution, ...newUpdates];
     }
@@ -81,10 +85,42 @@ const solveSymbolOrder = curry(
 
         const makeUpdates = () => {
             const word = getWord(fullBoard(game.size, solution), dim, index) as MaybeEmptyChar[]; // known symbols at given coordinates
-            return uniq(makeBoardUpdates(solveReSymbolOrder(re, word), index, dim));
+            return uniq(makeBoardUpdates(solveReSymbolOrder(re as RegEx<RegExType.SYMBOL_ORDER>, word), index, dim));
         };
 
-        return [...solution, ...(re.type !== RegExType.SYMBOL_ORDER ? [] : makeUpdates())];
+        return [...solution, ...(re?.type === RegExType.SYMBOL_ORDER ? makeUpdates() : [])];
+    }
+);
+
+/**
+ * Provides BoardUpdates to solve RegExType.PREVIOUS_SYMBOL at given coordinates.
+ */
+const solvePreviousSymbols = curry(
+    (game: EssentialGame, dim: Dim, index: number, solution: BoardUpdate[]): BoardUpdate[] => {
+        const re = game.regex[dim][index];
+
+        const makeUpdates = () => {
+            const word = getWord(fullBoard(game.size, solution), dim, index) as MaybeEmptyChar[];
+            return uniq(makeBoardUpdates(solveRePrevSymbol(re as RegEx<RegExType.PREVIOUS_SYMBOL>, word), index, dim));
+        };
+
+        return [...solution, ...(re?.type === RegExType.PREVIOUS_SYMBOL ? makeUpdates() : [])];
+    }
+);
+
+/**
+ * Provides BoardUpdates to solve RegExType.NEXT_SYMBOL at given coordinates.
+ */
+const solveNextSymbols = curry(
+    (game: EssentialGame, dim: Dim, index: number, solution: BoardUpdate[]): BoardUpdate[] => {
+        const re = game.regex[dim][index];
+
+        const makeUpdates = () => {
+            const word = getWord(fullBoard(game.size, solution), dim, index) as MaybeEmptyChar[];
+            return uniq(makeBoardUpdates(solveReNextSymbol(re as RegEx<RegExType.NEXT_SYMBOL>, word), index, dim));
+        };
+
+        return [...solution, ...(re?.type === RegExType.NEXT_SYMBOL ? makeUpdates() : [])];
     }
 );
 
@@ -146,7 +182,46 @@ function solveReSymbolOrder(re: RegEx, word: MaybeEmptyChar[]): IndexedSymbol[] 
 
     const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), finalWord);
 
-    return filter((entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '', entries) as IndexedSymbol[];
+    return filter(
+        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
+        entries
+    ) as IndexedSymbol[];
+}
+
+/**
+ * Provides exact index and value of symbols next to anchor symbols of a regex of RegExType.NEXT_SYMBOL.
+ */
+function solveRePrevSymbol(re: RegEx<RegExType.PREVIOUS_SYMBOL>, word: MaybeEmptyChar[]): IndexedSymbol[] {
+    const { anchor, other } = re.meta;
+
+    let resultWord = word;
+
+    if (other.length === 1) resultWord = mapI((s, i) => (word[i + 1] === anchor ? other[0] : s), word);
+
+    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), resultWord);
+
+    return filter(
+        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
+        entries
+    ) as IndexedSymbol[];
+}
+
+/**
+ * Provides exact index and value of symbols next to anchor symbols of a regex of RegExType.NEXT_SYMBOL.
+ */
+function solveReNextSymbol(re: RegEx<RegExType.NEXT_SYMBOL>, word: MaybeEmptyChar[]): IndexedSymbol[] {
+    const { anchor, other } = re.meta;
+
+    let resultWord = word;
+
+    if (other.length === 1) resultWord = mapI((s, i) => (word[i - 1] === anchor ? other[0] : s), word);
+
+    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), resultWord);
+
+    return filter(
+        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
+        entries
+    ) as IndexedSymbol[];
 }
 
 /**
@@ -226,6 +301,30 @@ if (import.meta.vitest) {
         ]);
     });
 
+    it('can provide symbol positions in a RegExType.NEXT_SYMBOL', () => {
+        const re: RegEx<RegExType.NEXT_SYMBOL> = makeMetaRegEx(RegExType.NEXT_SYMBOL, '^([^A|AB])+$', 'g', {
+            anchor: 'A',
+            other: ['B']
+        });
+
+        expect(solveReNextSymbol(re, ['', '', 'A', '', ''])).toStrictEqual([
+            { symbol: 'A', position: 2 },
+            { symbol: 'B', position: 3 }
+        ]);
+    });
+
+    it('can provide symbol positions in a RegExType.PREV_SYMBOL', () => {
+        const re: RegEx<RegExType.PREVIOUS_SYMBOL> = makeMetaRegEx(RegExType.PREVIOUS_SYMBOL, '^([^A|BA])+$', 'g', {
+            anchor: 'A',
+            other: ['B']
+        });
+
+        expect(solveRePrevSymbol(re, ['', '', 'A', '', ''])).toStrictEqual([
+            { symbol: 'B', position: 1 },
+            { symbol: 'A', position: 2 }
+        ]);
+    });
+
     it('can provide step by step solution instructions for positional information', () => {
         const _makeRegex = makeSegRegEx(RegExType.SYMBOL_POSITIONS);
 
@@ -269,6 +368,36 @@ if (import.meta.vitest) {
             { row: 0, col: 1, value: 'B' },
             { row: 1, col: 0, value: 'C' },
             { row: 1, col: 1, value: 'D' }
+        ]);
+    });
+
+    it('can provide step by step solution instructions for anchored information', () => {
+        const solution = generateSolution(
+            {
+                board: [
+                    ['A', 'B'],
+                    ['C', 'D']
+                ],
+                regex: {
+                    [Dim.ROW]: [
+                        makeMetaRegEx(RegExType.NEXT_SYMBOL, '^([^A|AB])+$', 'g', { anchor: 'A', other: ['B'] }),
+                        makeMetaRegEx(RegExType.PREVIOUS_SYMBOL, '^([^D|CD])+$', 'g', { anchor: 'D', other: ['C'] })
+                    ],
+                    [Dim.COL]: [null, null]
+                },
+                size: 2
+            },
+            [
+                { row: 0, col: 0, value: 'A' },
+                { row: 1, col: 1, value: 'D' }
+            ]
+        );
+
+        expect(solution).toStrictEqual([
+            { row: 0, col: 0, value: 'A' },
+            { row: 1, col: 1, value: 'D' },
+            { row: 0, col: 1, value: 'B' },
+            { row: 1, col: 0, value: 'C' }
         ]);
     });
 }

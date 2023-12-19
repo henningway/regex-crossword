@@ -1,4 +1,4 @@
-import { Char, ExtendedChar, RegEx } from '@/type/common';
+import { Char, RegEx } from '@/type/common';
 import { RegExType } from '@/type/enum';
 import { randomElement, randomSubset, repeatFunction } from '@/util/common';
 import {
@@ -55,14 +55,22 @@ function stringCharacteristics(value: string) {
 export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, flags = ''): RegEx<RegExType> => {
     const re = new RegExp(source, flags);
 
-    return { source: re.source, type, re };
+    return { source: re.source, type, re, meta: undefined };
 });
 
 export const makeSegRegEx = curry(<T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
     const re = new RegExp('^' + collapse(segments) + '$', flags);
 
-    return { segments, source: re.source, type, re };
+    return { segments, source: re.source, type, re, meta: undefined };
 });
+
+export const makeMetaRegEx = curry(
+    <T extends RegExType>(type: T, source: string, flags = '', meta: RegEx<T>['meta']): RegEx<T> => {
+        const re = new RegExp(source, flags);
+
+        return { source: re.source, type, re, meta };
+    }
+);
 
 /**
  * Revelas the longest repeating non-overlapping sequence of symbols. Uses capturing to make the regex harder to read.
@@ -111,34 +119,39 @@ function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> 
 /**
  * Reveals the next symbol(s) to the occurence of an anchor symbol.
  *
- * Ex.: MISSISSIPPI: /^([^M|MI])*$/
+ * Ex.: MISSISSIPPI: /^([^M|MI])+$/
  */
 function regexNextSymbol(value: string): RegEx<RegExType.NEXT_SYMBOL> {
     const draftSymbols = filter((s) => s !== last(value), symbols(value));
     const anchorSymbol = randomElement(draftSymbols);
-    const nextSymbols = nextOrPrevSymbols(anchorSymbol, value, true);
+    const nextSymbols = nextOrPrevSymbols(anchorSymbol, value, true) as Char[];
 
-    return makeRegEx(
+    return makeMetaRegEx(
         RegExType.NEXT_SYMBOL,
         `^([^${anchorSymbol}]|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})+$`,
-        'g'
+        'g',
+        {
+            anchor: anchorSymbol,
+            other: nextSymbols
+        }
     );
 }
 
 /**
  * Reveals the previous symbol(s) to the occurence of an anchor symbol.
  *
- * Ex.: MISSISSIPPI: /^([^I|MI|SI|PI])*$/
+ * Ex.: MISSISSIPPI: /^([^I|MI|SI|PI])+$/
  */
 function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
     const draftSymbols = filter((s) => s !== head(value), symbols(value));
     const anchorSymbol = randomElement(draftSymbols);
-    const prevSymbols = nextOrPrevSymbols(anchorSymbol, value, false);
+    const prevSymbols = nextOrPrevSymbols(anchorSymbol, value, false) as Char[];
 
-    return makeRegEx(
+    return makeMetaRegEx(
         RegExType.PREVIOUS_SYMBOL,
         `^([^${anchorSymbol}]|${join('|', map(collapse, xprod(prevSymbols, [anchorSymbol])))})+$`,
-        'g'
+        'g',
+        { anchor: anchorSymbol, other: prevSymbols }
     );
 }
 

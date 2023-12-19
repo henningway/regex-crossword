@@ -23,6 +23,7 @@ export interface Game extends EssentialGame {
     allSymbols: Char[];
     draftedSymbols: Char[];
     entropy: number;
+    regex: { [Dim.ROW]: RegEx[]; [Dim.COL]: RegEx[] };
     replayIndex: number;
     solution: BoardUpdate[];
     solutionIndex: number;
@@ -35,7 +36,7 @@ export interface Game extends EssentialGame {
  */
 export interface EssentialGame {
     board: Board;
-    regex: { [Dim.ROW]: RegEx[]; [Dim.COL]: RegEx[] };
+    regex: { [Dim.ROW]: (RegEx | null)[]; [Dim.COL]: (RegEx | null)[] };
     size: number;
 }
 
@@ -63,4 +64,10 @@ export interface RegEx<T extends RegExType = RegExType> {
     segments?: string[];
     source: string;
     type: T;
+    meta: T extends RegExType.NEXT_SYMBOL | RegExType.PREVIOUS_SYMBOL
+        ? {
+              anchor: Char;
+              other: Char[];
+          }
+        : undefined;
 }
