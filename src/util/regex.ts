@@ -160,7 +160,7 @@ function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
 /**
  * Reveals the longest palindrome without giving away the involved symbols.
  *
- *  * Ex.: MISSISSIPPI: /^M+I+S+I+S+I*P+I$/
+ * Ex.: MISSISSIPPI: /^.*(.)(.)(.).(\3)(\2)(\1).*$/
  */
 function regexLongestPalindrome(value: string): RegEx<RegExType.LONGEST_PALINDROME> {
     const len = longestPalindrome(value).length;
