@@ -23,7 +23,8 @@ import {
     tap,
     test,
     uniq,
-    values
+    values,
+    zipWith
 } from 'ramda';
 
 type Solver = (game: EssentialGame, dim: Dim, index: number) => ComposableSolver;
@@ -52,7 +53,9 @@ export function generateSolution(game: EssentialGame, partialSolution: BoardUpda
         makeSolvers(solveNextSymbols, Dim.ROW),
         makeSolvers(solveNextSymbols, Dim.COL),
         makeSolvers(solvePreviousSymbols, Dim.ROW),
-        makeSolvers(solvePreviousSymbols, Dim.COL)
+        makeSolvers(solvePreviousSymbols, Dim.COL),
+        makeSolvers(solvePalindromes, Dim.ROW),
+        makeSolvers(solvePalindromes, Dim.COL)
     ]) as ComposableSolver[];
 
     if (DEBUG) solvers = map(withLogging, solvers);
@@ -70,7 +73,13 @@ const solveSymbolPositions = curry(
 
         const newUpdates =
             re?.type === RegExType.SYMBOL_POSITIONS
-                ? uniq(makeBoardUpdates(solveReSymbolPositions(re as RegEx<RegExType.SYMBOL_POSITIONS>, game.size), index, dim))
+                ? uniq(
+                      makeBoardUpdates(
+                          solveReSymbolPositions(re as RegEx<RegExType.SYMBOL_POSITIONS>, game.size),
+                          index,
+                          dim
+                      )
+                  )
                 : [];
 
         return [...solution, ...newUpdates];
@@ -122,6 +131,24 @@ const solveNextSymbols = curry(
         };
 
         return [...solution, ...(re?.type === RegExType.NEXT_SYMBOL ? makeUpdates() : [])];
+    }
+);
+
+/**
+ * Provides BoardUpdates to solve RegExType.LONGEST_PALINDROME at given coordinates.
+ */
+const solvePalindromes = curry(
+    (game: EssentialGame, dim: Dim, index: number, solution: BoardUpdate[]): BoardUpdate[] => {
+        const re = game.regex[dim][index];
+
+        const makeUpdates = () => {
+            const word = getWord(fullBoard(game.size, solution), dim, index) as MaybeEmptyChar[];
+            return uniq(
+                makeBoardUpdates(solveRePalindrome(re as RegEx<RegExType.LONGEST_PALINDROME>, word), index, dim)
+            );
+        };
+
+        return [...solution, ...(re?.type === RegExType.LONGEST_PALINDROME ? makeUpdates() : [])];
     }
 );
 
@@ -179,14 +206,7 @@ function solveReSymbolOrder(re: RegEx<RegExType.SYMBOL_ORDER>, word: MaybeEmptyC
     });
 
     // two passes allows gap filling to apply in all cases
-    const finalWord = fillBlanks(fillBlanks(word));
-
-    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), finalWord);
-
-    return filter(
-        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
-        entries
-    ) as IndexedSymbol[];
+    return makeIndexedSymbols(fillBlanks(fillBlanks(word)));
 }
 
 /**
@@ -199,12 +219,7 @@ function solveRePrevSymbol(re: RegEx<RegExType.PREVIOUS_SYMBOL>, word: MaybeEmpt
 
     if (other.length === 1) resultWord = mapI((s, i) => (word[i + 1] === anchor ? other[0] : s), word);
 
-    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), resultWord);
-
-    return filter(
-        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
-        entries
-    ) as IndexedSymbol[];
+    return makeIndexedSymbols(resultWord);
 }
 
 /**
@@ -217,12 +232,24 @@ function solveReNextSymbol(re: RegEx<RegExType.NEXT_SYMBOL>, word: MaybeEmptyCha
 
     if (other.length === 1) resultWord = mapI((s, i) => (word[i - 1] === anchor ? other[0] : s), word);
 
-    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), resultWord);
+    return makeIndexedSymbols(resultWord);
+}
 
-    return filter(
-        (entry: IndexedSymbol<MaybeEmptyChar>) => entry.symbol !== '' && entry.symbol !== null,
-        entries
-    ) as IndexedSymbol[];
+/**
+ * Provides exact index and value of mirrored symbols in a palindrome (RegExTyp.LONGEST_PALINDROME).
+ *
+ * Limitation: length of palindrome has to match the length of the word.
+ */
+function solveRePalindrome(re: RegEx<RegExType.LONGEST_PALINDROME>, word: MaybeEmptyChar[]): IndexedSymbol[] {
+    if (re.meta.length < word.length) return [];
+
+    const resultWord = zipWith(
+        (a: MaybeEmptyChar, b: MaybeEmptyChar) => (!isEmptyChar(a) ? a : !isEmptyChar(b) ? b : ''),
+        word,
+        reverse(word)
+    );
+
+    return makeIndexedSymbols(resultWord);
 }
 
 /**
@@ -240,7 +267,18 @@ function makeBoardUpdates(symbols: IndexedSymbol[], index: number, dim: Dim): Bo
 }
 
 const concatAll = reduce(concat, []);
+const isEmptyChar = (char: MaybeEmptyChar): boolean => char === '' || char === null;
+const isNotEmptySymbol = (entry: IndexedSymbol<MaybeEmptyChar>): boolean => !isEmptyChar(entry.symbol);
 const mapI = addIndex(map);
+
+/**
+ * Turns given word into IndexedSymbols.
+ */
+function makeIndexedSymbols(word: MaybeEmptyChar[]): IndexedSymbol[] {
+    const entries: IndexedSymbol<MaybeEmptyChar>[] = mapI((s, i) => ({ symbol: s, position: i }), word);
+
+    return filter(isNotEmptySymbol, entries) as IndexedSymbol[];
+}
 
 /**
  * Provides counts of elements in an array.
@@ -329,6 +367,24 @@ if (import.meta.vitest) {
         expect(solveRePrevSymbol(re, ['', '', 'A', '', ''])).toStrictEqual([
             { symbol: 'B', position: 1 },
             { symbol: 'A', position: 2 }
+        ]);
+    });
+
+    it('can provide symbol positions in a RegExType.LONGEST_PALINDROME', () => {
+        const re: RegEx<RegExType.LONGEST_PALINDROME> = makeMetaRegEx(
+            RegExType.LONGEST_PALINDROME,
+            '^.*(.)(.)(\\2)(\\1).*$',
+            '',
+            {
+                length: 4
+            }
+        );
+
+        expect(solveRePalindrome(re, ['A', '', 'B', ''])).toStrictEqual([
+            { symbol: 'A', position: 0 },
+            { symbol: 'B', position: 1 },
+            { symbol: 'B', position: 2 },
+            { symbol: 'A', position: 3 }
         ]);
     });
 

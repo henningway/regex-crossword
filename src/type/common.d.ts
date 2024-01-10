@@ -67,5 +67,7 @@ export interface RegEx<T extends RegExType = RegExType> {
         ? { anchor: Char; other: Char[] }
         : T extends RegExType.SYMBOL_ORDER | RegExType.SYMBOL_POSITIONS
         ? { segments: string[] }
+        : T extends RegExType.LONGEST_PALINDROME
+        ? { length: number }
         : undefined;
 }

@@ -163,13 +163,13 @@ function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
  * Ex.: MISSISSIPPI: /^.*(.)(.)(.).(\3)(\2)(\1).*$/
  */
 function regexLongestPalindrome(value: string): RegEx<RegExType.LONGEST_PALINDROME> {
-    const len = longestPalindrome(value).length;
-    const halfLen = Math.floor(len / 2);
-    const isOdd = len % 2 === 1;
+    const length = longestPalindrome(value).length;
+    const halfLen = Math.floor(length / 2);
+    const isOdd = length % 2 === 1;
 
     const [base, mirror] = [collapse(repeat('(.)', halfLen)), collapse(times((i) => `(\\${halfLen - i})`, halfLen))];
 
-    return makeRegEx(RegExType.LONGEST_PALINDROME, `.*${base}${isOdd ? '.' : ''}${mirror}.*`);
+    return makeMetaRegEx(RegExType.LONGEST_PALINDROME, `.*${base}${isOdd ? '.' : ''}${mirror}.*`, '', { length });
 }
 
 /**
