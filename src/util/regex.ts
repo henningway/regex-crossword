@@ -58,12 +58,6 @@ export const makeRegEx = curry(<T extends RegExType>(type: T, source: string, fl
     return { source: re.source, type, re, meta: undefined };
 });
 
-export const makeSegRegEx = curry(<T extends RegExType>(type: T, segments: string[], flags = ''): RegEx<RegExType> => {
-    const re = new RegExp('^' + collapse(segments) + '$', flags);
-
-    return { segments, source: re.source, type, re, meta: undefined };
-});
-
 export const makeMetaRegEx = curry(
     <T extends RegExType>(type: T, source: string, flags = '', meta: RegEx<T>['meta']): RegEx<T> => {
         const re = new RegExp(source, flags);
@@ -113,7 +107,7 @@ function regexSymbolPositions(value: string): RegEx<RegExType.SYMBOL_POSITIONS> 
         segments
     );
 
-    return makeSegRegEx(RegExType.SYMBOL_POSITIONS, segments);
+    return makeMetaRegEx(RegExType.SYMBOL_POSITIONS, `^${collapse(segments)}$`, '', { segments });
 }
 
 /**
@@ -130,10 +124,7 @@ function regexNextSymbol(value: string): RegEx<RegExType.NEXT_SYMBOL> {
         RegExType.NEXT_SYMBOL,
         `^([^${anchorSymbol}]|${join('|', map(collapse, xprod([anchorSymbol], nextSymbols)))})+$`,
         'g',
-        {
-            anchor: anchorSymbol,
-            other: nextSymbols
-        }
+        { anchor: anchorSymbol, other: nextSymbols }
     );
 }
 
@@ -163,7 +154,7 @@ function regexPreviousSymbol(value: string): RegEx<RegExType.PREVIOUS_SYMBOL> {
 function regexSymbolOrder(value: string): RegEx<RegExType.SYMBOL_ORDER> {
     const segments = [...map((s) => s + '+', symbolsInOrder(value))];
 
-    return makeSegRegEx(RegExType.SYMBOL_ORDER, segments);
+    return makeMetaRegEx(RegExType.SYMBOL_ORDER, `^${collapse(segments)}$`, '', { segments });
 }
 
 /**

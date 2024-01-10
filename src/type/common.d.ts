@@ -61,13 +61,11 @@ export interface Options {
 
 export interface RegEx<T extends RegExType = RegExType> {
     re: RegExp;
-    segments?: string[];
     source: string;
     type: T;
     meta: T extends RegExType.NEXT_SYMBOL | RegExType.PREVIOUS_SYMBOL
-        ? {
-              anchor: Char;
-              other: Char[];
-          }
+        ? { anchor: Char; other: Char[] }
+        : T extends RegExType.SYMBOL_ORDER | RegExType.SYMBOL_POSITIONS
+        ? { segments: string[] }
         : undefined;
 }

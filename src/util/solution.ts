@@ -1,7 +1,8 @@
 import { BoardUpdate, Char, EssentialGame, ExtendedChar, IndexedSymbol, MaybeEmptyChar, RegEx } from '@/type/common';
 import { Dim, RegExType } from '@/type/enum';
 import { fullBoard, getWord } from '@/util/game';
-import { makeMetaRegEx, makeSegRegEx } from '@/util/regex';
+import { makeMetaRegEx } from '@/util/regex';
+import { collapse } from '@/util/string';
 import {
     addIndex,
     apply,
@@ -69,7 +70,7 @@ const solveSymbolPositions = curry(
 
         const newUpdates =
             re?.type === RegExType.SYMBOL_POSITIONS
-                ? uniq(makeBoardUpdates(solveReSymbolPositions(re, game.size), index, dim))
+                ? uniq(makeBoardUpdates(solveReSymbolPositions(re as RegEx<RegExType.SYMBOL_POSITIONS>, game.size), index, dim))
                 : [];
 
         return [...solution, ...newUpdates];
@@ -127,14 +128,14 @@ const solveNextSymbols = curry(
 /**
  * Provides exact index and value of symbols at the start and end of a regex of RegExType.SYMBOL_POSITIONS.
  */
-function solveReSymbolPositions(re: RegEx, size: number): IndexedSymbol[] {
+function solveReSymbolPositions(re: RegEx<RegExType.SYMBOL_POSITIONS>, size: number): IndexedSymbol[] {
     const makeEntries = (matches: string[], fromEnd: boolean): IndexedSymbol<ExtendedChar>[] =>
         mapI((s, i) => ({ symbol: s, position: fromEnd ? size - 1 - i : i }), matches);
 
     const takeSymbols = takeWhile(test(/^[A-Z\.]$/));
 
-    const entriesLeft = makeEntries(takeSymbols(re.segments!), false);
-    const entriesRight = makeEntries(takeSymbols(reverse(re.segments!)), true);
+    const entriesLeft = makeEntries(takeSymbols(re.meta.segments), false);
+    const entriesRight = makeEntries(takeSymbols(reverse(re.meta.segments)), true);
 
     const filterSymbols = filter((entry: IndexedSymbol<ExtendedChar>) => entry.symbol !== '.') as (
         list: IndexedSymbol<ExtendedChar>[]
@@ -146,8 +147,8 @@ function solveReSymbolPositions(re: RegEx, size: number): IndexedSymbol[] {
 /**
  * Provides exact index and value of symbols at the start and end of a regex of RegExType.SYMBOL_POSITIONS.
  */
-function solveReSymbolOrder(re: RegEx, word: MaybeEmptyChar[]): IndexedSymbol[] {
-    const reSymbolOrder: string[] = map<string, string>(head, re.segments!);
+function solveReSymbolOrder(re: RegEx<RegExType.SYMBOL_ORDER>, word: MaybeEmptyChar[]): IndexedSymbol[] {
+    const reSymbolOrder: string[] = map<string, string>(head, re.meta.segments);
     const maxCountInReHist = Math.max(...values(histogram(reSymbolOrder)));
 
     // @ts-ignore
@@ -268,7 +269,9 @@ if (import.meta.vitest) {
     const { it, expect } = import.meta.vitest;
 
     it('can provide symbol positions in a RegExType.SYMBOL_POSITIONS', () => {
-        const re = makeSegRegEx(RegExType.SYMBOL_POSITIONS, ['M', 'I', '.', 'S', '.*', 'I', '.', 'P', 'I']);
+        const re: RegEx<RegExType.SYMBOL_POSITIONS> = makeMetaRegEx(RegExType.SYMBOL_POSITIONS, '^MI.S.*I.PI$', '', {
+            segments: ['M', 'I', '.', 'S', '.*', 'I', '.', 'P', 'I']
+        });
 
         expect(solveReSymbolPositions(re, 11)).toStrictEqual([
             { symbol: 'M', position: 0 },
@@ -281,7 +284,9 @@ if (import.meta.vitest) {
     });
 
     it('can provide symbol positions in a RegExType.SYMBOL_ORDER', () => {
-        const re = makeSegRegEx(RegExType.SYMBOL_ORDER, ['A+', 'B+', 'C+']);
+        const re: RegEx<RegExType.SYMBOL_ORDER> = makeMetaRegEx(RegExType.SYMBOL_ORDER, '^A+B+C+$', '', {
+            segments: ['A+', 'B+', 'C+']
+        });
 
         expect(solveReSymbolOrder(re, ['', '', 'A', '', 'C', '', ''])).toStrictEqual([
             { symbol: 'A', position: 0 },
@@ -293,7 +298,9 @@ if (import.meta.vitest) {
             { symbol: 'C', position: 6 }
         ]);
 
-        const re2 = makeSegRegEx(RegExType.SYMBOL_ORDER, ['A+', 'B+', 'C+']);
+        const re2: RegEx<RegExType.SYMBOL_ORDER> = makeMetaRegEx(RegExType.SYMBOL_ORDER, '^A+B+C+$', '', {
+            segments: ['A+', 'B+', 'C+']
+        });
 
         expect(solveReSymbolOrder(re2, ['', '', '', '', ''])).toStrictEqual([
             { symbol: 'A', position: 0 },
@@ -326,7 +333,8 @@ if (import.meta.vitest) {
     });
 
     it('can provide step by step solution instructions for positional information', () => {
-        const _makeRegex = makeSegRegEx(RegExType.SYMBOL_POSITIONS);
+        const _makeRegex = (segments: string[]) =>
+            makeMetaRegEx(RegExType.SYMBOL_POSITIONS, `^${collapse(segments)}$`, '', { segments });
 
         const solution = generateSolution({
             board: [
@@ -349,7 +357,8 @@ if (import.meta.vitest) {
     });
 
     it('can provide step by step solution instructions for order information', () => {
-        const _makeRegex = makeSegRegEx(RegExType.SYMBOL_ORDER);
+        const _makeRegex = (segments: string[]) =>
+            makeMetaRegEx(RegExType.SYMBOL_ORDER, `^${collapse(segments)}$`, '', { segments });
 
         const solution = generateSolution({
             board: [
